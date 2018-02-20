@@ -5,21 +5,13 @@ module.exports = {
         test: '',
         announcement: ''
     },
-    team: new Map ([
-        ['Sawich', {
-            vk: 86382408,
-            discordid: '',
-            // there will be an user (member) object
-            member: null
-        }], ['Sawich', {
-            vk: 86382408,
-            discordid: '',
-            member: null
-        }]
-    ]),
     team_icon_url: 'https://pp.userapi.com/c638721/v638721291/6ead8/PkwxZ165LXA.jpg',
     site: 'https://angeldev.org',
     discord: {
+        prefix: '!',
+        role: {
+            admin: ''
+        },
         token: ''
     },
     vk: {

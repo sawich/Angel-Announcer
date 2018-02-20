@@ -59,4 +59,5 @@ typings/
 
 #
 config.js
+config-team.json
 package-lock.json
