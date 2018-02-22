@@ -35,6 +35,7 @@ const bodyParser = require ('body-parser')
 app.use (bodyParser.json ())
 app.use (bodyParser.urlencoded ({ extended: true }))
 
+const request = require ('request-promise-native')
 const fs = require ('fs')
 const config = require ('./config')
 const team = new Map
@@ -85,6 +86,12 @@ bot.on ('ready', () => {
 		const body = req.body
 
 		switch (body.type) {
+			case 'group_join':
+				send_discord_group_join_post (body.object)
+			break
+			case 'group_leave':
+				send_discord_group_leave_post (body.object)
+			break
 			case 'wall_post_new':
 				send_discord_post (body.object.text)
 			break
@@ -245,6 +252,72 @@ const cmds = new CCommands (new Map ([
 		}})
 	}], [ 'ping', message => message.reply ('pong')]
 ]))
+
+const send_discord_group_join_post = _body => {
+	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
+	.then (async res => {
+		for (const user of res.response) {
+			await channel.log.send ({ embed: {
+				color: 0x00bfff,
+				description: `Подписочка от [${user.first_name} ${user.last_name}](https://vk.com/id${user.id})`,
+				author: {
+					name: bot.user.username,
+					icon_url: bot.user.avatarURL,
+					url: config.site
+				},
+				thumbnail: {
+					url: user.photo_50
+				}
+			}})
+		}
+	})
+	.catch (err => {
+		console.error (err)
+
+		channel.log.send ({ embed: {
+			color: 0xff0000,
+			description: `${err}`,
+			author: {
+				name: bot.user.username,
+				icon_url: bot.user.avatarURL,
+				url: config.site
+			},
+		}})
+	})
+}
+
+const send_discord_group_leave_post = _body => {
+	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
+	.then (async res => {
+		for (const user of res.response) {
+			await channel.log.send ({ embed: {
+				color: 0xffff00,
+				description: `Отписочка от [${user.first_name} ${user.last_name}](https://vk.com/id${user.id})`,
+				author: {
+					name: bot.user.username,
+					icon_url: bot.user.avatarURL,
+					url: config.site
+				},
+				thumbnail: {
+					url: user.photo_50
+				}
+			}})
+		}
+	})
+	.catch (err => {
+		console.error (err)
+
+		channel.log.send ({ embed: {
+			color: 0xff0000,
+			description: `${err}`,
+			author: {
+				name: bot.user.username,
+				icon_url: bot.user.avatarURL,
+				url: config.site
+			},
+		}})
+	})
+}
 
 const send_discord_post = _str => {
 	if (!_str.includes (config.vk.tag)) { return }
