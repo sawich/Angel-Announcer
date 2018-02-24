@@ -11,11 +11,11 @@
 	—
 	#releases@angeldevmanga | #tags
 */
-/*
-const test_msg = '\
+
+const _str = '\
 Истории школьниц | Глава 13 | Трудно быть старшеклассницей!\n\
 \n\
-Над главой работали: [id86382408|Sawich], [club149052453|safasf]\n\
+Над главой работали: [id86382408|Sawich], [club149052453|safasf], #hashtagusername1, #hashtagusername2\n\
 —\n\
 #mintmanga: https://vk.cc/7JnMjj\n\
 #mangachan: https://vk.cc/7JnM8t\n\
@@ -24,7 +24,8 @@ const test_msg = '\
 Переведено с английского языка.\n\
 —\n\
 #releases@angeldevmanga | #tags'
-*/
+
+
 const Discord = require ("discord.js")
 const bot = new Discord.Client ()
 
@@ -38,8 +39,8 @@ app.use (bodyParser.urlencoded ({ extended: true }))
 const request = require ('request-promise-native')
 const fs = require ('fs')
 const config = require ('./config')
-const team = new Map
 
+let team = new Map
 let guild = null
 let channel = {
 	log: null,
@@ -72,15 +73,16 @@ bot.on ('ready', () => {
 		process.abort ()
 	}
 
+
 	const config_team = require ('./config-team.json')
-	for (const person of config_team) {
+	team = new Map (config_team.map (person => {
 		const member = guild.member (person.discordid)
 		if (!member) {
 			console.log (`member [id:${person.discordid}] not found`)
 			process.abort ()
 		}
-		team.set (person.nick, member)
-	}
+		return [ person.nick, member ]
+	}))
 
 	app.post ('/', (req, res) => {
 		const body = req.body
@@ -186,11 +188,15 @@ const cmds = new CCommands (new Map ([
 			},
 		}})
 	}],
+	[ 'list', message => {
+		if (!message.member.roles.has (config.discord.role.admin)) { return }
+
+		message.reply ('\n' + Array.from (team).map (([key, value]) => `${key} [DD:${value.user.username}]`).join ('\n'))
+	}],
 	[ 'add', (message, [nick, discordid]) => {
 		if (!message.member.roles.has (config.discord.role.admin)) { return }
 
-		if ('undefined' === typeof nick ||
-			'undefined' === typeof discordid) {
+		if (undefined === nick || undefined === discordid) {
 			message.reply ({ embed: {
 				color: 0xff0000,
 				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
@@ -323,12 +329,15 @@ const send_discord_post = _str => {
 	if (!_str.includes (config.vk.tag)) { return }
 
 	// users link replace to discord users
-	const angel_info_regexp = /\[(id|club)(\d+)\|([a-zA-z][a-zA-Z0-9_.]+)\]/gi
+	const workers = _str.match (/Над главой работали:\s+(.*)\n/i)[0]
+	const angel_info_regexp = /\[(id|club)(\d+)\|(.*?)\]|(#.*?)[,|\n]/gi
 
-	let angel_info = null
+	let angel_info = []
 	let chapter_workers = []
-	while (null != (angel_info = angel_info_regexp.exec (_str))) {
-		chapter_workers.push (team.get (angel_info[3].toLowerCase ()) || angel_info[3])
+	while (null != (angel_info = angel_info_regexp.exec (workers))) {
+		const angel_name = (angel_info[3] || angel_info[4].slice (1)).trim ()
+		
+		chapter_workers.push (team.get (angel_name.toLowerCase ()) || angel_name)
 	}
 
 	// readers link replace to discord-like link
