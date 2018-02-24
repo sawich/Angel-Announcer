@@ -11,7 +11,7 @@
 	—
 	#releases@angeldevmanga | #tags
 */
-
+/*
 const _str = '\
 Истории школьниц | Глава 13 | Трудно быть старшеклассницей!\n\
 \n\
@@ -24,7 +24,7 @@ const _str = '\
 Переведено с английского языка.\n\
 —\n\
 #releases@angeldevmanga | #tags'
-
+*/
 
 const Discord = require ("discord.js")
 const bot = new Discord.Client ()
