@@ -137,7 +137,7 @@ bot.once('ready', () => {
 	})
 	
 // mongoose.connect('mongodb://username:password@host:port/database?options...');
-	const conn = `mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_ADMIN_PASSWORD || ''}@${process.env.DATABASE_SERVICE_NAME || 'localhost:27017'}/angeldev`
+	const conn = `mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_ADMIN_PASSWORD || ''}@${process.env.DATABASE_SERVICE_NAME || 'localhost'}:27017/angeldev`
 	mongoose.connect(conn, { 
 		useNewUrlParser: true 
 	}).catch ((error) => {
