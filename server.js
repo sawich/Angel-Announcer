@@ -36,9 +36,11 @@ const bodyParser = require ('body-parser')
 app.use (bodyParser.json ())
 app.use (bodyParser.urlencoded ({ extended: true }))
 
+let server
+
 const request = require ('request-promise-native')
 const fs = require ('fs')
-const config = require ('./config')
+const config = require ('./config.js')
 
 let team = new Map
 let guild = null
@@ -98,7 +100,7 @@ bot.on ('ready', () => {
 				send_discord_post (body.object.text)
 			break
 			case 'confirmation':
-				res.send (config.vk.confirmation)
+				res.send (process.env.VK_CON)
 				
 				channel.log.send ({ embed: {
 					color: 0xffff00,
@@ -109,24 +111,40 @@ bot.on ('ready', () => {
 						url: config.site
 					},
 				}})
-				return
 			break
 		}
 
 		res.sendStatus (200)
 	})
 
-	app.listen (80, function () {
-		console.log ('Listening on port 80!')
+  server = app.listen(
+    process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
+    process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
+  )
+
+	server.on('error', error => {
+		console.error (JSON.stringify (error))
 		channel.log.send ({ embed: {
-			color: 0x00ff00,
-			description: 'Back-end connected',
+			color: 0xff0000,
+			description: `${JSON.stringify (error)}`,
 			author: {
 				name: bot.user.username,
 				icon_url: bot.user.avatarURL,
 				url: config.site
 			},
-		}})
+		}})	
+	})
+	
+	server.on('listening', () => {		
+		channel.log.send ({ embed: {
+			color: 0x00ff00,
+			description: `App listening at http://${server.address().address}:${server.address().port}`,
+			author: {
+				name: bot.user.username,
+				icon_url: bot.user.avatarURL,
+				url: config.site
+			},
+		}})	
 	})
 
 	channel.log.send ({ embed: {
@@ -375,4 +393,4 @@ bot.on ('message', message => {
 	cmds.execute (message)
 })
 
-bot.login (config.discord.token)
+bot.login (process.env.DISCORD_TOKEN)

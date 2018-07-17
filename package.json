@@ -2,9 +2,9 @@
   "name": "ad",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cross-env VK_CON=d37361d7 DISCORD_TOKEN=NDE0OTM4Mjg3NzI0MTY3MTY4.Di6qjA.LrtTV1WmCk5F712tcusWR-dXV2c node server.js"
   },
   "author": "sawich",
   "license": "ISC",
@@ -13,6 +13,7 @@
     "express": "^4.16.2",
     "fs": "0.0.1-security",
     "request": "^2.83.0",
-    "request-promise-native": "^1.0.5"
+    "request-promise-native": "^1.0.5",
+    "cross-env": "^5.2.0"
   }
 }

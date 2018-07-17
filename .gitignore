@@ -58,7 +58,4 @@ typings/
 .env
 
 #
-yarn.*
-config.js
-config-team.json
 package-lock.json
