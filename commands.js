@@ -1,4 +1,4 @@
-module.exports = class CCommands {
+module.exports = class commands {
 	constructor (_cmds) {
 		this._cmds = _cmds
 	}

@@ -26,6 +26,10 @@ const _str = '\
 #releases@angeldevmanga | #tags'
 */
 
+const user_management = require('./user_management')
+const vk_observer = require ('./vk_observer')
+const commands = require ('./commands')
+
 const discord = require ("discord.js")
 const bot = new discord.Client ()
 
@@ -35,12 +39,34 @@ const bodyParser = require ('body-parser')
 app.use (bodyParser.json ())
 app.use (bodyParser.urlencoded ({ extended: true }))
 
-const mongoose = require('mongoose')
+const loki = require('lokijs')
+const db = {
+	maiden: null
+}
+
+let cmds = null
+const database = new loki('database_angeldev.json', {
+	autoload: true,
+	autosave: true,
+	autosaveInterval: 4000,
+	autoloadCallback: () => {
+		db.maiden = database.getCollection('maidens')
+		if (null === db.maiden) {
+			db.maiden = database.addCollection('maidens', {
+				unique: ['name', 'discordid']
+			})
+		}
+
+		bot.login (process.env.DISCORD_TOKEN).catch (() => {
+			console.error('Token invalid')
+			process.exit(1)
+		})
+	} 
+})
 
 let server
 
 const request = require ('request-promise-native')
-const fs = require ('fs')
 const config = require ('./config.js')
 
 let guild = null
@@ -69,23 +95,21 @@ class message {
 
 /* --- */
 
-/* SCHEMAS */
-
-const AngelMaidenSchema = mongoose.Schema({
-	nick: { type: String, unique: true },
-	discordid: { type: String, unique: true }
-})
-
-const AngelMaiden = mongoose.model('AngelMaiden', AngelMaidenSchema)
-
-/* ------ */
-
 bot.once('ready', () => {
 	guild = bot.guilds.get (config.guildid)
 	if (!guild) {
 		console.log (`guild [id:${config.guildid}] not found`)
 		process.abort ()
 	}
+
+	const um = new user_management(db.maiden, bot, config, guild)
+
+	cmds = new commands(new Map([
+		[ 'del', (...args) => um.delete(...args) ],
+		[ 'list', (...args) => um.list(...args) ],
+		[ 'add', (...args) => um.add(...args) ],
+		[ 'ping', message => message.reply ('pong')]
+	]))
 
 	channel.log = guild.channels.get (config.channelid.log)
 	if (!channel.log) {
@@ -105,15 +129,17 @@ bot.once('ready', () => {
 		process.abort ()
 	}
 
+	const vk_o = new vk_observer(bot, config, channel)
+
 	app.post ('/', (req, res) => {
 		const body = req.body
 
 		switch (body.type) {
 			case 'group_join':
-				send_discord_group_join_post (body.object)
+			vk_o.group_join(body.object)
 			break
 			case 'group_leave':
-				send_discord_group_leave_post (body.object)
+			vk_o.group_leave(body.object)
 			break
 			case 'wall_post_new':
 				send_discord_post (body.object.text)
@@ -135,24 +161,6 @@ bot.once('ready', () => {
 
 		res.sendStatus (200)
 	})
-	
-// mongoose.connect('mongodb://username:password@host:port/database?options...');
-	const conn = `mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_PASSWORD || ''}@${process.env.DATABASE_SERVICE_NAME || 'localhost'}:27017/${process.env.MONGODB_DATABASE || 'angeldev'}`
-	mongoose.connect(conn, { 
-		useNewUrlParser: true 
-	}).catch ((error) => {
-		message.error (`${error.message}\nconn: ${conn}`).then (process.exit(1))		
-	}).then (() => {			
-		channel.log.send ({ embed: {
-			color: 0x00ff00,
-			description: `DB connected`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-		}})
-	})
 
 	server = app.listen(
 		process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
@@ -160,7 +168,8 @@ bot.once('ready', () => {
 	)
 
 	server.on('error', error => {
-		message.error (error)
+		message.error(error)
+		process.exit(1)
 	})
 	
 	server.on('listening', () => {		
@@ -187,114 +196,6 @@ bot.once('ready', () => {
 	console.log (`Logged in as ${bot.user.tag}!`);
 })
 
-const CCommands = require ('./commands')
-const cmds = new CCommands (new Map ([
-	[ 'del', (message, [nick]) => {
-		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
-
-		if (!nick) {
-			message.reply ({ embed: {
-				color: 0xff0000,
-				description: `BAD NICK\n\n${config.discord.prefix}del {team-nickname}`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-			}})
-			return
-		}
-
-		AngelMaiden.deleteOne({ nick: { $regex: new RegExp(nick, 'i') } }).then((res) => {
-			if (res.n <= 0) {
-				return message.reply ({ embed: {
-					color: 0xff0000,
-					description: `Юзверь не найден`,
-					author: {
-						name: bot.user.username,
-						icon_url: bot.user.avatarURL,
-						url: config.site
-					},
-				}})
-			}
-			return message.reply ({ embed: {
-				color: 0x00ff00,
-				description: `Юзверь удалён`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-			}})
-		}).catch(message.error)
-	}],
-	[ 'list', message => {
-		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
-
-		AngelMaiden.find().then ((angel_maidens) => {
-			message.reply ({ embed: {
-				color: 0x00bfff,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-				description: angel_maidens.length > 0 ? '' : '*Пусто*',
-				fields: angel_maidens.map ((angel_maiden) => {
-					const find = guild.members.get (angel_maiden.discordid)
-					return { name: angel_maiden.nick, value: `${find}` || 'Юзверь не найден на сервере', inline: true }
-				})
-			}})
-		}).catch (message.error)
-	}],
-	[ 'add', (message, [nick, discordid]) => {
-		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
-
-		if (!nick || !discordid) {
-			message.reply ({ embed: {
-				color: 0xff0000,
-				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-			}})
-			return
-		}
-
-		const member = guild.member (discordid)
-		if (!member) {
-			console.log (`member [id:${discordid}] not found`)
-			message.reply ({ embed: {
-				color: 0xff0000,
-				description: `member [id:${discordid}] not found`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-			}})
-			return
-		}
-
-		AngelMaiden.findOneAndUpdate(
-			{ nick }, { nick, discordid }, 
-			{ upsert: true }
-		).catch (message.error)
-
-		message.reply ({ embed: {
-			color: 0x00ff00,
-			description: `Successful`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-		}})
-	}], [ 'ping', message => message.reply ('pong')]
-]))
-
 const send_discord_group_join_post = _body => {
 	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
 	.then (res => {
@@ -310,8 +211,7 @@ const send_discord_group_join_post = _body => {
 				url: res.response.photo_50
 			}
 		}})
-	})
-	.catch (message.error)
+	}).catch (message.error)
 }
 
 const send_discord_group_leave_post = _body => {
@@ -381,9 +281,4 @@ bot.on ('message', message => {
 	if (!message.content.startsWith (config.discord.prefix)) { return }
 
 	cmds.execute (message)
-})
-
-bot.login (process.env.DISCORD_TOKEN).catch (() => {
-	console.error('Token invalid')
-	process.exit(1)
 })
