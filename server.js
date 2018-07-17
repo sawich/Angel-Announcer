@@ -26,11 +26,10 @@ const _str = '\
 #releases@angeldevmanga | #tags'
 */
 
-const Discord = require ("discord.js")
-const bot = new Discord.Client ()
+const discord = require ("discord.js")
+const bot = new discord.Client ()
 
-const express = require ('express')
-const app = express ()
+const app = require('express')()
 
 const bodyParser = require ('body-parser')
 app.use (bodyParser.json ())
@@ -162,9 +161,9 @@ bot.on ('ready', () => {
 const CCommands = require ('./commands')
 const cmds = new CCommands (new Map ([
 	[ 'del', (message, [nick]) => {
-		if (!message.member.roles.has (config.discord.role.admin)) { return }
+		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
 
-		if ('undefined' === typeof nick) {
+		if (!nick) {
 			message.reply ({ embed: {
 				color: 0xff0000,
 				description: `BAD NICK\n\n${config.discord.prefix}del {team-nickname}`,
@@ -194,7 +193,7 @@ const cmds = new CCommands (new Map ([
 		config_team.splice (config_team.findIndex (e => e.nick == nick), 1)
 
 		fs.writeFileSync ('./config-team.json',
-			JSON.stringify (config_team, null, 4))
+			JSON.stringify (config_team, null, 2))
 
 		message.reply ({ embed: {
 			color: 0x00ff00,
@@ -207,14 +206,14 @@ const cmds = new CCommands (new Map ([
 		}})
 	}],
 	[ 'list', message => {
-		if (!message.member.roles.has (config.discord.role.admin)) { return }
+		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
 
 		message.reply ('\n' + Array.from (team).map (([key, value]) => `${key} [DD:${value.user.username}]`).join ('\n'))
 	}],
 	[ 'add', (message, [nick, discordid]) => {
-		if (!message.member.roles.has (config.discord.role.admin)) { return }
+		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
 
-		if (undefined === nick || undefined === discordid) {
+		if (!nick || !discordid) {
 			message.reply ({ embed: {
 				color: 0xff0000,
 				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
@@ -228,7 +227,6 @@ const cmds = new CCommands (new Map ([
 		}
 
 		nick = nick.toLowerCase ()
-
 		if (team.has (nick)) {
 			message.reply ({ embed: {
 				color: 0xff0000,
@@ -261,7 +259,7 @@ const cmds = new CCommands (new Map ([
 		config_team.push ({ nick, discordid })
 
 		fs.writeFileSync ('./config-team.json',
-			JSON.stringify (config_team, null, 4))
+			JSON.stringify (config_team, null, 2))
 
 		team.set (nick, member)
 
