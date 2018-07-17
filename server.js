@@ -137,10 +137,11 @@ bot.once('ready', () => {
 	})
 	
 // mongoose.connect('mongodb://username:password@host:port/database?options...');
-	mongoose.connect(`mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_ADMIN_PASSWORD || ''}@${process.env.DATABASE_SERVICE_NAME || 'localhost:27017'}/angeldev`, { 
+	const conn = `mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_ADMIN_PASSWORD || ''}@${process.env.DATABASE_SERVICE_NAME || 'localhost:27017'}/angeldev`
+	mongoose.connect(conn, { 
 		useNewUrlParser: true 
 	}).catch ((error) => {
-		message.error (error.message).then (process.exit(1))		
+		message.error (`${error.message}\nconn: ${conn}`).then (process.exit(1))		
 	}).then (() => {			
 		channel.log.send ({ embed: {
 			color: 0x00ff00,
