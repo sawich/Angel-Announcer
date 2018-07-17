@@ -35,13 +35,14 @@ const bodyParser = require ('body-parser')
 app.use (bodyParser.json ())
 app.use (bodyParser.urlencoded ({ extended: true }))
 
+const mongoose = require('mongoose')
+
 let server
 
 const request = require ('request-promise-native')
 const fs = require ('fs')
 const config = require ('./config.js')
 
-let team = new Map
 let guild = null
 let channel = {
 	log: null,
@@ -49,7 +50,37 @@ let channel = {
 	announcement: null
 }
 
-bot.on ('ready', () => {
+/* --- */
+
+class message {
+	static error (message) {
+		console.log (message)
+		return channel.log.send ({ embed: {
+			color: 0xff0000,
+			description: `${channel}`,
+			author: {
+				name: bot.user.username,
+				icon_url: bot.user.avatarURL,
+				url: config.site
+			},
+		}})
+	}
+}
+
+/* --- */
+
+/* SCHEMAS */
+
+const AngelMaidenSchema = mongoose.Schema({
+	nick: { type: String, unique: true },
+	discordid: { type: String, unique: true }
+})
+
+const AngelMaiden = mongoose.model('AngelMaiden', AngelMaidenSchema)
+
+/* ------ */
+
+bot.once('ready', () => {
 	guild = bot.guilds.get (config.guildid)
 	if (!guild) {
 		console.log (`guild [id:${config.guildid}] not found`)
@@ -73,17 +104,6 @@ bot.on ('ready', () => {
 		console.log (`channel.announcement [id:${config.channelid.announcement}] not found`)
 		process.abort ()
 	}
-
-
-	const config_team = require ('./config-team.json')
-	team = new Map (config_team.map (person => {
-		const member = guild.member (person.discordid)
-		if (!member) {
-			console.log (`member [id:${person.discordid}] not found`)
-			process.abort ()
-		}
-		return [ person.nick, member ]
-	}))
 
 	app.post ('/', (req, res) => {
 		const body = req.body
@@ -115,23 +135,31 @@ bot.on ('ready', () => {
 
 		res.sendStatus (200)
 	})
-
-  server = app.listen(
-    process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
-  )
-
-	server.on('error', error => {
-		console.error (JSON.stringify (error))
+	
+// mongoose.connect('mongodb://username:password@host:port/database?options...');
+	mongoose.connect(`mongodb://${process.env.MONGODB_USER || ''}:${process.env.MONGODB_ADMIN_PASSWORD || ''}@${DATABASE_SERVICE_NAME || 'localhost:27017'}/angeldev`, { 
+		useNewUrlParser: true 
+	}).catch ((error) => {
+		message.error (error.message).then (process.exit(1))		
+	}).then (() => {			
 		channel.log.send ({ embed: {
-			color: 0xff0000,
-			description: `${JSON.stringify (error)}`,
+			color: 0x00ff00,
+			description: `DB connected`,
 			author: {
 				name: bot.user.username,
 				icon_url: bot.user.avatarURL,
 				url: config.site
 			},
-		}})	
+		}})
+	})
+
+	server = app.listen(
+		process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
+		process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
+	)
+
+	server.on('error', error => {
+		message.error (error)
 	})
 	
 	server.on('listening', () => {		
@@ -146,7 +174,7 @@ bot.on ('ready', () => {
 		}})	
 	})
 
-	channel.log.send ({ embed: {
+  channel.log.send ({ embed: {
 		color: 0x00ff00,
 		description: 'Discord init',
 		author: {
@@ -176,39 +204,47 @@ const cmds = new CCommands (new Map ([
 			return
 		}
 
-		if (!team.delete (nick)) {
-			message.reply ({ embed: {
-				color: 0xff0000,
-				description: `Does not exist`,
+		AngelMaiden.deleteOne({ nick: { $regex: new RegExp(nick, 'i') } }).then((res) => {
+			if (res.n <= 0) {
+				return message.reply ({ embed: {
+					color: 0xff0000,
+					description: `Юзверь не найден`,
+					author: {
+						name: bot.user.username,
+						icon_url: bot.user.avatarURL,
+						url: config.site
+					},
+				}})
+			}
+			return message.reply ({ embed: {
+				color: 0x00ff00,
+				description: `Юзверь удалён`,
 				author: {
 					name: bot.user.username,
 					icon_url: bot.user.avatarURL,
 					url: config.site
 				},
 			}})
-			return
-		}
-
-		const config_team = require ('./config-team.json')
-		config_team.splice (config_team.findIndex (e => e.nick == nick), 1)
-
-		fs.writeFileSync ('./config-team.json',
-			JSON.stringify (config_team, null, 2))
-
-		message.reply ({ embed: {
-			color: 0x00ff00,
-			description: `Successful`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-		}})
+		}).catch(message.error)
 	}],
 	[ 'list', message => {
 		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
 
-		message.reply ('\n' + Array.from (team).map (([key, value]) => `${key} [DD:${value.user.username}]`).join ('\n'))
+		AngelMaiden.find().then ((angel_maidens) => {
+			message.reply ({ embed: {
+				color: 0x00bfff,
+				author: {
+					name: bot.user.username,
+					icon_url: bot.user.avatarURL,
+					url: config.site
+				},
+				description: angel_maidens.length > 0 ? '' : '*Пусто*',
+				fields: angel_maidens.map ((angel_maiden) => {
+					const find = guild.members.get (angel_maiden.discordid)
+					return { name: angel_maiden.nick, value: `${find}` || 'Юзверь не найден на сервере', inline: true }
+				})
+			}})
+		}).catch (message.error)
 	}],
 	[ 'add', (message, [nick, discordid]) => {
 		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
@@ -217,20 +253,6 @@ const cmds = new CCommands (new Map ([
 			message.reply ({ embed: {
 				color: 0xff0000,
 				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-			}})
-			return
-		}
-
-		nick = nick.toLowerCase ()
-		if (team.has (nick)) {
-			message.reply ({ embed: {
-				color: 0xff0000,
-				description: `Already exists`,
 				author: {
 					name: bot.user.username,
 					icon_url: bot.user.avatarURL,
@@ -255,13 +277,10 @@ const cmds = new CCommands (new Map ([
 			return
 		}
 
-		const config_team = require ('./config-team.json')
-		config_team.push ({ nick, discordid })
-
-		fs.writeFileSync ('./config-team.json',
-			JSON.stringify (config_team, null, 2))
-
-		team.set (nick, member)
+		AngelMaiden.findOneAndUpdate(
+			{ nick }, { nick, discordid }, 
+			{ upsert: true }
+		).catch (message.error)
 
 		message.reply ({ embed: {
 			color: 0x00ff00,
@@ -277,68 +296,39 @@ const cmds = new CCommands (new Map ([
 
 const send_discord_group_join_post = _body => {
 	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
-	.then (async res => {
-		for (const user of res.response) {
-			await channel.log.send ({ embed: {
-				color: 0x00bfff,
-				description: `Подписочка от [${user.first_name} ${user.last_name}](https://vk.com/id${user.id})`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-				thumbnail: {
-					url: user.photo_50
-				}
-			}})
-		}
-	})
-	.catch (err => {
-		console.error (err)
-
+	.then (res => {
 		channel.log.send ({ embed: {
-			color: 0xff0000,
-			description: `${err}`,
+			color: 0x00bfff,
+			description: `Подписочка от [${res.response.first_name} ${res.response.last_name}](https://vk.com/id${res.response.id})`,
 			author: {
 				name: bot.user.username,
 				icon_url: bot.user.avatarURL,
 				url: config.site
 			},
+			thumbnail: {
+				url: res.response.photo_50
+			}
 		}})
 	})
+	.catch (message.error)
 }
 
 const send_discord_group_leave_post = _body => {
 	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
 	.then (async res => {
-		for (const user of res.response) {
-			await channel.log.send ({ embed: {
-				color: 0xffff00,
-				description: `Отписочка от [${user.first_name} ${user.last_name}](https://vk.com/id${user.id})`,
-				author: {
-					name: bot.user.username,
-					icon_url: bot.user.avatarURL,
-					url: config.site
-				},
-				thumbnail: {
-					url: user.photo_50
-				}
-			}})
-		}
-	})
-	.catch (err => {
-		console.error (err)
-
 		channel.log.send ({ embed: {
-			color: 0xff0000,
-			description: `${err}`,
+			color: 0xffff00,
+			description: `Отписочка от [${res.response.first_name} ${res.response.last_name}](https://vk.com/id${res.response.id})`,
 			author: {
 				name: bot.user.username,
 				icon_url: bot.user.avatarURL,
 				url: config.site
 			},
+			thumbnail: {
+				url: res.response.photo_50
+			}
 		}})
-	})
+	}).catch (message.error)
 }
 
 const send_discord_post = _str => {
@@ -353,6 +343,7 @@ const send_discord_post = _str => {
 	while (null != (angel_info = angel_info_regexp.exec (workers))) {
 		const angel_name = (angel_info[3] || angel_info[4].slice (1)).trim ()
 		
+		//AngelMaiden.findOne({ nick: angel_name.toLowerCase () })
 		chapter_workers.push (team.get (angel_name.toLowerCase ()) || angel_name)
 	}
 
@@ -391,4 +382,7 @@ bot.on ('message', message => {
 	cmds.execute (message)
 })
 
-bot.login (process.env.DISCORD_TOKEN)
+bot.login (process.env.DISCORD_TOKEN).catch (() => {
+	console.error('Token invalid')
+	process.exit(1)
+})
