@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "cross-env DISCORD_TOKEN=NDE0OTM4Mjg3NzI0MTY3MTY4.Di7crg.lPhXWV7iR1vrDpSx1L84Ehz17us node server.js"
+    "start": "node server.js"
   },
   "author": "sawich",
   "license": "ISC",
