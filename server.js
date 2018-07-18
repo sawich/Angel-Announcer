@@ -135,7 +135,7 @@ class CApp {
 			},
 		}})
 
-		console.log (`Logged in as ${bot.user.tag}!`)
+		console.log (`Logged in as ${discord_client.user.tag}!`)
 	}
 
 	constructor() {
