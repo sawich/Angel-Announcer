@@ -26,177 +26,137 @@ const _str = '\
 #releases@angeldevmanga | #tags'
 */
 
-const user_management = require('./user_management')
-const vk_observer = require ('./vk_observer')
-const commands = require ('./commands')
-
-const discord = require ("discord.js")
-const bot = new discord.Client ()
-
-const app = require('express')()
-
-const bodyParser = require ('body-parser')
-app.use (bodyParser.json ())
-app.use (bodyParser.urlencoded ({ extended: true }))
-
-const loki = require('lokijs')
-const db = {
-	maiden: null
-}
-
-let cmds = null
-const database = new loki('database_angeldev.json', {
-	autoload: true,
-	autosave: true,
-	autosaveInterval: 4000,
-	autoloadCallback: () => {
-		db.maiden = database.getCollection('maidens')
-		if (null === db.maiden) {
-			db.maiden = database.addCollection('maidens', {
-				unique: ['name', 'discordid']
-			})
-		}
-
-		bot.login (process.env.DISCORD_TOKEN).catch (() => {
-			console.error('Token invalid')
-			process.exit(1)
-		})
-	} 
-})
-
-let server
-
-const request = require ('request-promise-native')
 const config = require ('./config.js')
 
-let guild = null
-let channel = {
-	log: null,
-	test: null,
-	announcement: null
+const CUserManagement = require('./CUserManagement')
+const CVkObserver     = require('./CVkObserver')
+const CChannels       = require('./CChannels')
+const CCommands       = require('./CCommands')
+const CDataBase       = require('./CDataBase')
+const CGuilds         = require('./CGuilds')
+
+const discord = require ("discord.js")
+const body_parser = require ('body-parser')
+const express = require('express')()
+
+
+express.use (body_parser.json ())
+express.use (body_parser.urlencoded ({ extended: true }))
+
+
+
+class CApp {
+	async init () {		
+		const discord_client = new discord.Client()
+		
+		try {
+			await discord_client.login(process.env.DISCORD_TOKEN)
+		} catch (ex) {
+			console.error(ex)
+			process.exit(1)
+		}
+
+		const guilds = new CGuilds(discord_client)
+		const channels = new CChannels(guilds)
+		const database = new CDataBase() 
+		const user_management = new CUserManagement(database, discord_client)
+	
+		this.commands = new CCommands(new Map([
+			[ 'del', (...args) => user_management.delete(...args) ],
+			[ 'list', (...args) => user_management.list(...args) ],
+			[ 'add', (...args) => user_management.add(...args) ],
+			[ 'ping', message => message.reply ('pong')]
+		]))
+
+		const vk_o = new CVkObserver(database, discord_client, guilds, channels)
+	
+		express.post ('/', (req, res) => {
+			const body = req.body
+	
+			switch (body.type) {
+				case 'group_join':
+					vk_o.group_join(body.object)
+				break
+				case 'group_leave':
+					vk_o.group_leave(body.object)
+				break
+				case 'wall_post_new':
+					vk_o.manga_post(body.object.text)
+				break
+				case 'confirmation':
+					res.send (process.env.VK_CON)
+					
+					return channels.log.send ({ embed: {
+						color: 0xffff00,
+						description: `VK confirmation request [clubid:${body.group_id}]`,
+						author: {
+							name: discord_client.user.username,
+							icon_url: discord_client.user.avatarURL,
+							url: config.site
+						},
+					}})
+			}
+	
+			res.sendStatus (200)
+		})
+	
+		const server = express.listen(
+			process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
+			process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
+		)
+	
+		server.on('error', error => {
+			console.error(error)
+			channels.log.send ({ embed: {
+				color: 0xff0000,
+				description: `${error}`,
+				author: {
+					name: discord_client.user.username,
+					icon_url: discord_client.user.avatarURL,
+					url: config.site
+				},
+			}})
+			process.exit(1)
+		})
+		
+		server.once('listening', () => {		
+			channels.log.send ({ embed: {
+				color: 0x00ff00,
+				description: `App listening at http://${server.address().address}:${server.address().port}`,
+				author: {
+					name: discord_client.user.username,
+					icon_url: discord_client.user.avatarURL,
+					url: config.site
+				},
+			}})	
+		})
+
+		discord_client.on('message', (...args) => this.OnDiscordMessage(...args))
+	}
+
+	constructor() {
+		this.init()
+	}
+
+	async OnDiscordMessage(message) {
+		this.commands.execute (message)
+	}
 }
 
-/* --- */
+new CApp
 
-class message {
-	static error (message) {
-		console.log (message)
-		return channel.log.send ({ embed: {
-			color: 0xff0000,
-			description: `${channel}`,
+/*
+
+		channels.log.send ({ embed: {
+			color: 0x00ff00,
+			description: 'Discord init',
 			author: {
 				name: bot.user.username,
 				icon_url: bot.user.avatarURL,
 				url: config.site
 			},
 		}})
-	}
-}
 
-/* --- */
-
-bot.once('ready', () => {
-	guild = bot.guilds.get (config.guildid)
-	if (!guild) {
-		console.log (`guild [id:${config.guildid}] not found`)
-		process.abort ()
-	}
-
-	const um = new user_management(db.maiden, bot, config, guild)
-
-	cmds = new commands(new Map([
-		[ 'del', (...args) => um.delete(...args) ],
-		[ 'list', (...args) => um.list(...args) ],
-		[ 'add', (...args) => um.add(...args) ],
-		[ 'ping', message => message.reply ('pong')]
-	]))
-
-	channel.log = guild.channels.get (config.channelid.log)
-	if (!channel.log) {
-		console.log (`channel.log [id:${config.channelid.log}] not found`)
-		process.abort ()
-	}
-
-	channel.test = guild.channels.get (config.channelid.test)
-	if (!channel.test) {
-		console.log (`channel.test [id:${config.channelid.test}] not found`)
-		process.abort ()
-	}
-
-	channel.announcement = guild.channels.get (config.channelid.announcement)
-	if (!channel.announcement) {
-		console.log (`channel.announcement [id:${config.channelid.announcement}] not found`)
-		process.abort ()
-	}
-
-	const vk_o = new vk_observer(db.maiden, bot, config, guild, channel)
-
-	app.post ('/', (req, res) => {
-		const body = req.body
-
-		switch (body.type) {
-			case 'group_join':
-				vk_o.group_join(body.object)
-			break
-			case 'group_leave':
-				vk_o.group_leave(body.object)
-			break
-			case 'wall_post_new':
-				vk_o.manga_post(body.object.text)
-			break
-			case 'confirmation':
-				res.send (process.env.VK_CON)
-				
-				return channel.log.send ({ embed: {
-					color: 0xffff00,
-					description: `VK confirmation request [clubid:${body.group_id}]`,
-					author: {
-						name: bot.user.username,
-						icon_url: bot.user.avatarURL,
-						url: config.site
-					},
-				}})
-		}
-
-		res.sendStatus (200)
-	})
-
-	server = app.listen(
-		process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-		process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
-	)
-
-	server.on('error', error => {
-		message.error(error)
-		process.exit(1)
-	})
-	
-	server.on('listening', () => {		
-		channel.log.send ({ embed: {
-			color: 0x00ff00,
-			description: `App listening at http://${server.address().address}:${server.address().port}`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-		}})	
-	})
-
-  channel.log.send ({ embed: {
-		color: 0x00ff00,
-		description: 'Discord init',
-		author: {
-			name: bot.user.username,
-			icon_url: bot.user.avatarURL,
-			url: config.site
-		},
-	}})
-	console.log (`Logged in as ${bot.user.tag}!`);
-})
-
-bot.on ('message', message => {
-	if (!message.content.startsWith (config.discord.prefix)) { return }
-
-	cmds.execute (message)
-})
+		console.log (`Logged in as ${bot.user.tag}!`)
+	} 
+})*/

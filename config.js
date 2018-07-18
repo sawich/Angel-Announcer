@@ -1,5 +1,8 @@
-module.exports = {
-	guildid: '404992131539795968',
+module.exports = Object.freeze({
+	guildid: {
+		main: '404992131539795968',
+		storage: '404992131539795968'
+	},
 	channelid: {
 		log: '407422277144018954',
 		test: '407454794056204290',
@@ -16,4 +19,4 @@ module.exports = {
 	vk: {
 		tag: '#releases@angeldevmanga'
 	}
-}
+})

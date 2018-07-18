@@ -1,14 +1,10 @@
 const discord = require('discord.js')
+const config = require ('./config.js')
 
-module.exports = class user_management {
-  constructor (_maiden, _bot, _config, _guild) {
-    this.db = {
-      maiden: _maiden
-    }
-
+module.exports = class CUserManagement {
+  constructor (_database, _bot) {
+    this.database = _database
     this.bot = _bot
-    this.config = _config
-    this.guild = _guild
   }
 
   async delete (message, nick) {
@@ -17,16 +13,16 @@ module.exports = class user_management {
 		if (!nick) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
-				description: `BAD NICK\n\n${this.config.discord.prefix}del {team-nickname}`,
+				description: `BAD NICK\n\n${config.discord.prefix}del {team-nickname}`,
 				author: {
 					name: this.bot.user.username,
 					icon_url: this.bot.user.avatarURL,
-					url: this.config.site
+					url: config.site
 				},
 			}})
 		}
 
-		const maiden = this.db.maiden.findOne({ nick: { $regex: new RegExp(`^${nick}$`, 'i') } })
+		const maiden = this.database.maidens.findOne({ nick: { $regex: new RegExp(`^${nick}$`, 'i') } })
 		if (!maiden) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
@@ -34,12 +30,12 @@ module.exports = class user_management {
 				author: {
 					name: this.bot.user.username,
 					icon_url: this.bot.user.avatarURL,
-					url: this.config.site
+					url: config.site
 				},
 			}})
 		}
 
-		this.db.maiden.remove(maiden)
+		this.database.maidens.remove(maiden)
 
 		return message.reply ({ embed: {
 			color: 0x00ff00,
@@ -47,7 +43,7 @@ module.exports = class user_management {
 			author: {
 				name: this.bot.user.username,
 				icon_url: this.bot.user.avatarURL,
-				url: this.config.site
+				url: config.site
 			},
 		}})
   }
@@ -55,17 +51,17 @@ module.exports = class user_management {
   async list (message) {
 		if (!message.member.hasPermission (discord.Permissions.FLAGS.ADMINISTRATOR)) { return }
 
-		const angel_maidens = this.db.maiden.find()
+		const angel_maidens = this.database.maidens.find()
 		message.reply ({ embed: {
 			color: 0x00bfff,
 			author: {
 				name: this.bot.user.username,
 				icon_url: this.bot.user.avatarURL,
-				url: this.config.site
+				url: config.site
 			},
 			description: angel_maidens.length > 0 ? '' : '*Пусто*',
 			fields: angel_maidens.map ((angel_maiden) => {
-				const find = this.guild.members.get (angel_maiden.discordid)
+				const find = message.guild.members.get (angel_maiden.discordid)
 				return { name: angel_maiden.nick, value: `${find}` || 'Юзверь не найден на сервере', inline: true }
 			})
 		}})
@@ -77,16 +73,16 @@ module.exports = class user_management {
 		if (!nick || !discordid) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
-				description: `BAD id or NICK\n\n${this.config.discord.prefix}add {team-nickname} {discordid}`,
+				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
 				author: {
 					name: this.bot.user.username,
 					icon_url: this.bot.user.avatarURL,
-					url: this.config.site
+					url: config.site
 				},
 			}})
 		}
 
-		const member = this.guild.member (discordid)
+		const member = message.guild.member (discordid)
 		if (!member) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
@@ -94,13 +90,13 @@ module.exports = class user_management {
 				author: {
 					name: this.bot.user.username,
 					icon_url: this.bot.user.avatarURL,
-					url: this.config.site
+					url: config.site
 				},
 			}})
 		}
 
 		try {
-			this.db.maiden.insert({ nick, discordid })
+			this.database.maidens.insert({ nick, discordid })
 		} catch {
 			return message.reply ({ embed: {
 				color: 0xff0000,
@@ -108,7 +104,7 @@ module.exports = class user_management {
 				author: {
 					name: this.bot.user.username,
 					icon_url: this.bot.user.avatarURL,
-					url: this.config.site
+					url: config.site
 				},
 			}})
 		}
@@ -119,7 +115,7 @@ module.exports = class user_management {
 			author: {
 				name: this.bot.user.username,
 				icon_url: this.bot.user.avatarURL,
-				url: this.config.site
+				url: config.site
 			},
 		}})
   }
