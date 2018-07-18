@@ -136,10 +136,10 @@ bot.once('ready', () => {
 
 		switch (body.type) {
 			case 'group_join':
-			vk_o.group_join(body.object)
+				vk_o.group_join(body.object)
 			break
 			case 'group_leave':
-			vk_o.group_leave(body.object)
+				vk_o.group_leave(body.object)
 			break
 			case 'wall_post_new':
 				send_discord_post (body.object.text)
