@@ -14,11 +14,11 @@ module.exports = class CChannels {
 			process.exit(1)
 		}
 
-		this._announcement = this._log/*guilds.main.channels.get (config.channelid.announcement)
+		this._announcement = guilds.main.channels.get (config.channelid.announcement)
 		if (!this._announcement) {
 			console.log (`channels.announcement [id:${config.channelid.announcement}] not found`)
 			process.exit(1)
-		}*/
+		}
 	}
 
 	// channel for logs | \WoW/
