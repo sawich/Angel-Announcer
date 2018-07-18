@@ -9,20 +9,20 @@ module.exports = class vk_observer {
     this._group_user_lj_post = (body, msg = 'Подписочка', color = 0x00bfff) => {
       request (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
       .then (res => {
-        console.log (res)
-
-        this.channel.log.send ({ embed: {
-          color,
-          description: `${msg} от [${res.response.first_name} ${res.response.last_name}](https://vk.com/id${res.response.id})`,
-          author: {
-            name: this.bot.user.username,
-            icon_url: this.bot.user.avatarURL,
-            url: this.config.site
-          },
-          thumbnail: {
-            url: res.response.photo_50
+        this.channel.log.send ({ embeds: res.response.map ((response) => {
+          return {
+            color,
+            description: `${msg} от [${response.first_name} ${response.last_name}](https://vk.com/id${response.id})`,
+            author: {
+              name: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+              url: this.config.site
+            },
+            thumbnail: {
+              url: res.response.photo_50
+            }
           }
-        }})
+        })})
       }).catch (console.log)
     }
   }
