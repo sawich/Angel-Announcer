@@ -129,7 +129,7 @@ bot.once('ready', () => {
 		process.abort ()
 	}
 
-	const vk_o = new vk_observer(bot, config, channel)
+	const vk_o = new vk_observer(db.maiden, bot, config, guild, channel)
 
 	app.post ('/', (req, res) => {
 		const body = req.body
@@ -142,7 +142,7 @@ bot.once('ready', () => {
 				vk_o.group_leave(body.object)
 			break
 			case 'wall_post_new':
-				send_discord_post (body.object.text)
+				vk_o.manga_post(body.object.text)
 			break
 			case 'confirmation':
 				res.send (process.env.VK_CON)
@@ -195,87 +195,6 @@ bot.once('ready', () => {
 	}})
 	console.log (`Logged in as ${bot.user.tag}!`);
 })
-
-const send_discord_group_join_post = _body => {
-	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
-	.then (res => {
-		channel.log.send ({ embed: {
-			color: 0x00bfff,
-			description: `Подписочка от [${res.response.first_name} ${res.response.last_name}](https://vk.com/id${res.response.id})`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-			thumbnail: {
-				url: res.response.photo_50
-			}
-		}})
-	}).catch (message.error)
-}
-
-const send_discord_group_leave_post = _body => {
-	request (`https://api.vk.com/method/users.get?user_ids=${_body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
-	.then (async res => {
-		channel.log.send ({ embed: {
-			color: 0xffff00,
-			description: `Отписочка от [${res.response.first_name} ${res.response.last_name}](https://vk.com/id${res.response.id})`,
-			author: {
-				name: bot.user.username,
-				icon_url: bot.user.avatarURL,
-				url: config.site
-			},
-			thumbnail: {
-				url: res.response.photo_50
-			}
-		}})
-	}).catch (message.error)
-}
-
-const send_discord_post = _str => {
-	if (!_str.includes (config.vk.tag)) { return }
-
-	// users link replace to discord users
-	const workers = _str.match (/Над главой работали:\s+(.*)\n/i)[0]
-	const angel_info_regexp = /\[(id|club)(\d+)\|(.*?)\]|(#.*?)[,|\n]/gi
-
-	let angel_info = []
-	let chapter_workers = []
-	while (null != (angel_info = angel_info_regexp.exec (workers))) {
-		const angel_name = (angel_info[3] || angel_info[4].slice (1)).trim ()
-		
-		//AngelMaiden.findOne({ nick: angel_name.toLowerCase () })
-		chapter_workers.push (team.get (angel_name.toLowerCase ()) || angel_name)
-	}
-
-	// readers link replace to discord-like link
-	const link_info_regexp = /#(\S+): (\S+)/gi
-
-	let link_info = null
-	let fields = []
-	while (null != (link_info = link_info_regexp.exec (_str))) {
-		fields.push ({
-			name: `${link_info[1]}`,
-			value: `[тык](${link_info[2]})`,
-			inline: true
-		})
-	}
-
-	return channel.announcement.send ({ embed: {
-		author: {
-			name: _str.split ('\n')[0],
-			icon_url: bot.user.avatarURL,
-			url: config.site
-		},
-		fields,
-		color: 0x00bfff,
-		description: `*Над главой работали: ${chapter_workers.join (', ')}*`,
-		footer: {
-			text: _str.match (/(Переведено с .*?)[\.|\n]/i)[0],
-			icon_url: config.team_icon_url
-		}
-	}})
-}
 
 bot.on ('message', message => {
 	if (!message.content.startsWith (config.discord.prefix)) { return }
