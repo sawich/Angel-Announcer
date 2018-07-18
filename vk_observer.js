@@ -6,11 +6,11 @@ module.exports = class vk_observer {
     this.config = _config
     this.channel = _channel
 
-    this._group_user_lj_post = (body, msg = 'Подписочка', color = 0x00bfff) => {
+    this._group_user_lj_post = async (body, msg = 'Подписочка', color = 0x00bfff) => {
       request (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
       .then (res => {
-        const embeds = res.response.map ((response) => {
-          return {
+        for (const response of res.response) {          
+          await this.channel.log.send ({ embed: {
             color,
             description: `${msg} от [${response.first_name} ${response.last_name}](https://vk.com/id${response.id})`,
             author: {
@@ -19,13 +19,10 @@ module.exports = class vk_observer {
               url: this.config.site
             },
             thumbnail: {
-              url: res.response.photo_50
+              url: response.photo_50
             }
-          }
-        })
-
-        console.log (embeds)
-        this.channel.log.send ({ embeds })
+          }})
+        }
       }).catch (console.log)
     }
   }
