@@ -123,12 +123,11 @@ bot.once('ready', () => {
 		process.abort ()
 	}
 
-	channel.announcement = channel.log
-	/*channel.announcement = guild.channels.get (config.channelid.announcement)
+	channel.announcement = guild.channels.get (config.channelid.announcement)
 	if (!channel.announcement) {
 		console.log (`channel.announcement [id:${config.channelid.announcement}] not found`)
 		process.abort ()
-	}*/
+	}
 
 	const vk_o = new vk_observer(db.maiden, bot, config, guild, channel)
 
