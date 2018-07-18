@@ -6,9 +6,9 @@ module.exports = class vk_observer {
     this.config = _config
     this.channel = _channel
 
-    this._group_user_lj_post = async (body, msg = 'Подписочка', color = 0x00bfff) => {
+    this._group_user_lj_post = (body, msg = 'Подписочка', color = 0x00bfff) => {
       request (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`, { json: true })
-      .then (res => {
+      .then (async (res) => {
         for (const response of res.response) {          
           await this.channel.log.send ({ embed: {
             color,
