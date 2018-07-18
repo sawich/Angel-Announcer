@@ -78,6 +78,20 @@ module.exports = class CVkObserver {
 	}})
   }
 
+  async confirmation(res, body) {
+    res.send (process.env.VK_CON)
+
+    this.channels.log.send ({ embed: {
+      color: 0xffff00,
+      description: `VK confirmation request [clubid:${body.group_id}]`,
+      author: {
+        name: this.bot.user.username,
+        icon_url: this.bot.user.avatarURL,
+        url: config.site
+      },
+    }})
+  }
+
   async group_leave(body) {
     this._group_user_lj_post(body, 'Отписочка', 0xffff00)    
   }
