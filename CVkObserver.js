@@ -11,7 +11,7 @@ module.exports = class CVkObserver {
     this._group_user_lj_post = (body, msg = 'Подписочка', color = 0x00bfff) => {
       axios.get (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`)
       .then (async (res) => {
-        console.log(response)
+        console.log(res)
         for (const response of res.response) {          
           await this.channels.log.send ({ embed: {
             color,
