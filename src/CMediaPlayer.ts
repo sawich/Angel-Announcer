@@ -11,6 +11,7 @@ import {
   VoiceBroadcast,
   VoiceConnection
 } from 'discord.js'
+import { promises } from 'fs';
 
 export interface IMediaPlayerPlaylistItem {
   play(): Promise <void>
@@ -22,24 +23,39 @@ class CMediaPlayerPlaylistItemYouTube implements IMediaPlayerPlaylistItem {
 
 }
 
+export class CUserPlaylist {
+  
+}
+
 export class CMediaPlayerPlaylist {
 
   private _items: Array <IMediaPlayerPlaylistItem>
 
   constructor() {}
 
-  async add(_item:Array <IMediaPlayerPlaylistItem>) {}
+  async add(_item: Array <IMediaPlayerPlaylistItem>): Promise <void> {} 
 
   async remove(_id: number): Promise <void> {}
 
+  async clear(): Promise <void> {}
 
 }
 
-export class CMediaPlayerPlayistInfo {
+export class CMediaPlayerPlaylists {
+  
+  private _items: Array <CMediaPlayerPlaylist>
 
-  private _current: number
+  constructor() {
+    this._items = []
+  }
 
+  async add(item: CMediaPlayerPlaylist) : Promise <void> {
+    this._items.push(item)
+  }
 
+  async next() : Promise <CMediaPlayerPlaylist> {
+    return this._items.shift()
+  }
 }
 
 export class CMediaPlayer {

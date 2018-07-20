@@ -1,12 +1,12 @@
 import config from './config/config.js'
-import { CDataBase } from './CDataBase'
+import { CDataBase } from './CDataBase.js'
 
 import { Permissions, Client, Message } from 'discord.js'
 
-export class CUserManagement {
+export class CMaidenManagement {
 
-	_database: CDataBase
-	_bot: Client
+	private _database: CDataBase
+	private _bot: Client
 
 	constructor (database: CDataBase, bot: Client) {
 		this._database = database
@@ -14,8 +14,6 @@ export class CUserManagement {
 	}
 
 	public async delete (message: Message, nick: string) : Promise <Message | Message[]> {
-		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
-
 		if (!nick) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
@@ -54,11 +52,9 @@ export class CUserManagement {
 		}})
 	}
 
-	public async list (message: Message) : Promise <void> {
-		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
-
+	public async list (message: Message) : Promise <Message | Message[]> {
 		const angel_maidens = this._database.maidens.find()
-		message.reply ({ embed: {
+		return message.reply ({ embed: {
 			color: 0x00bfff,
 			author: {
 				name: this._bot.user.username,
@@ -73,13 +69,12 @@ export class CUserManagement {
 		}})
 	}
 
-	public async add (message: Message, nick: string, discordid: string) : Promise <Message | Message[]> {
-		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
-
-		if (!nick || !discordid) {
+	public async add (message: Message, [ nick, discordid ]: string[]) : Promise <Message | Message[]> {
+		const member = message.guild.member (discordid)
+		if (!member) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
-				description: `BAD id or NICK\n\n${config.discord.prefix}add {team-nickname} {discordid}`,
+				description: `Сыча с таким(${discordid}) айдишником нет`,
 				author: {
 					name: this._bot.user.username,
 					icon_url: this._bot.user.avatarURL,
@@ -88,11 +83,10 @@ export class CUserManagement {
 			}})
 		}
 
-		const member = message.guild.member (discordid)
-		if (!member) {
+		if (!nick) {
 			return message.reply ({ embed: {
 				color: 0xff0000,
-				description: `member [id:${discordid}] not found`,
+				description: `Бэд ник(${nick})`,
 				author: {
 					name: this._bot.user.username,
 					icon_url: this._bot.user.avatarURL,
@@ -102,7 +96,7 @@ export class CUserManagement {
 		}
 
 		try {
-			this._database.maidens.insert({ nick, discordid })
+			this._database.maidens.insertOne({ nick, discordid })
 		} catch {
 			return message.reply ({ embed: {
 				color: 0xff0000,
@@ -117,7 +111,7 @@ export class CUserManagement {
 
 		return message.reply ({ embed: {
 			color: 0x00ff00,
-			description: `Successful`,
+			description: `Готово`,
 			author: {
 				name: this._bot.user.username,
 				icon_url: this._bot.user.avatarURL,

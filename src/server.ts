@@ -29,7 +29,7 @@
 
 import config from './config/config.js'
 
-import { CUserManagement } from './CUserManagement'
+import { CMaidenManagement } from './CMaidenManagement.js'
 import { CVkObserver, group_leave, group_join } from './CVkObserver'
 import { CChannels } from './CChannels'
 import { CCommands } from './CCommands'
@@ -39,7 +39,7 @@ import { CMediaPlayer } from './CMediaPlayer';
 // import { CManga } from './CManga'
 // import { CMediaPlayer from './CMediaPlayer'
 
-import { Message, Client } from 'discord.js'
+import { Permissions, Message, Client } from 'discord.js'
 import * as body_parser from 'body-parser'
 
 import * as express from 'express'
@@ -47,6 +47,7 @@ import { Request, Response, Express } from 'express'
 
 import { Server } from 'http'
 import { AddressInfo } from 'net';
+import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
 
 
 
@@ -64,17 +65,74 @@ class CApp {
 			}
 
 			//
-			const guilds          = new CGuilds(discord_client)
-			const channels        = new CChannels(guilds)
-			const database        = new CDataBase()
-			const user_management = new CUserManagement(database, discord_client)
-			const vk_observer     = new CVkObserver(database, discord_client, guilds, channels)
+			const guilds                   = new CGuilds(discord_client)
+			const channels                 = new CChannels(guilds)
+			const database                 = new CDataBase()
+			const maiden_management        = new CMaidenManagement(database, discord_client)
+			const user_playlist_management = new CUserPlaylistManagement()
+			const vk_observer              = new CVkObserver(database, discord_client, guilds, channels)
 
 			//
-			const commands        = new CCommands(new Map <string, Function> ([
-				[ 'del',  (message: Message, nick: string) => user_management.delete(message, nick) ],
-				[ 'list', (message: Message) => user_management.list(message) ],
-				[ 'add',  (message: Message, [ nick, discordid ]: string) => user_management.add(message, nick, discordid) ],
+			const commands = new CCommands(new Map <string, Function> ([
+			// CUserManagement
+
+				[ 'user', (message: Message, args: string[]) => {
+					if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR) || !args) { return }
+
+					switch (args.shift()) {
+						case 'del': {
+							if(!args.length) {
+								message.reply({ embed: {
+									color: 0xff0000,
+									description: 'Введи ник',
+									author: {
+										name: discord_client.user.username,
+										icon_url: discord_client.user.avatarURL,
+										url: config.site
+									},
+								}})
+								return
+							}
+
+							maiden_management.delete(message, args[0])
+							break
+						}
+						case 'list': {
+							maiden_management.list(message)
+							break
+						}
+						case 'add': {
+							if(args.length < 2) {
+								message.reply({ embed: {
+									color: 0xff0000,
+									description: 'Введи ник и discord id',
+									author: {
+										name: discord_client.user.username,
+										icon_url: discord_client.user.avatarURL,
+										url: config.site
+									},
+								}})
+								return
+							}
+
+							maiden_management.add(message, args)
+							break
+						}
+					}
+				} ],
+
+				[ 'pl', async (message: Message, args: string[]) => {
+					const playlist = await user_playlist_management.get (message)
+					
+					switch (args.shift()) {
+						case 'del': break
+						case 'add': break
+						case 'list': break
+					}
+				}],
+
+			// CUserPlaylistManagement
+
 				[ 'ping', (message: Message) => message.reply ('pong')]
 			]))
 

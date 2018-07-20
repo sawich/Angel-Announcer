@@ -4,23 +4,30 @@ import { Message } from 'discord.js'
 
 type commands_t = Map <string, Function>
 
+export interface ICommand {
+	command_handler(message: Message, args: string[]) : Promise <void>
+}
+
 export class CCommands {
 	
-	_cmds: commands_t
+	private _cmds: commands_t
 
 	constructor(_cmds: commands_t) {
 		this._cmds = _cmds
 	}
-		
-	async execute (message: Message) {
+	
+	static async parse_args (str: string) : Promise <string[]> {
+		return str.match(/"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S)+/g).join().replace(/"/g, '').split(',')
+	}
+
+	async execute (message: Message) : Promise <void> {
 		if (!message.content.startsWith (config.discord.prefix)) { 
 			return
 		}
 
-		const args: string[] = message.content.slice(config.discord.prefix.length).trim().match(/"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S)+/g).join().replace(/"/g, '').split(',')
-		const command: string = args.shift().toLowerCase();
+		const [ command, ...args ] = await CCommands.parse_args (message.content.slice(config.discord.prefix.length).trimRight())
 
-		const cmd: Function = this._cmds.get (command)
+		const cmd: Function = this._cmds.get (command.toLowerCase())
 		if (!cmd) { return }
 
 		cmd (message, args)

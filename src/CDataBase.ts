@@ -38,7 +38,9 @@ export class CDataBase {
 
 		this._maidens = database.getCollection <CDataBaseMaidenModel> ('maidens')
 		if (null === this._maidens) {
-			this._maidens = database.addCollection <CDataBaseMaidenModel> ('maidens')
+			this._maidens = database.addCollection <CDataBaseMaidenModel> ('maidens', {
+				unique: [ 'nick', 'discordid' ]
+			})
 		}
 	}
 
