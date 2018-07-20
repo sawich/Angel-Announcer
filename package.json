@@ -1,21 +1,26 @@
 {
   "name": "ad",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "main": "./build/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "tsc && node ./build/server.js"
   },
   "author": "sawich",
   "license": "ISC",
   "dependencies": {
+    "@lokidb/fs-storage": "^2.0.0-beta.7",
+    "@lokidb/loki": "^2.0.0-beta.7",
+    "@types/body-parser": "^1.17.0",
+    "@types/express": "^4.16.0",
+    "@types/node": "^10.5.2",
     "axios": "^0.18.0",
-    "cross-env": "^5.2.0",
     "discord.js": "^11.3.0",
     "express": "^4.16.2",
     "fs": "0.0.1-security",
-    "lokijs": "^1.5.5",
-    "mongoose": "^5.2.4"
+    "node-opus": "^0.3.0",
+    "ytdl-core": "^0.21.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^3.1.0-dev.20180717"
+  }
 }
