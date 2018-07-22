@@ -91,7 +91,27 @@ class CApp {
 					break
 					// редакт админом
 					case 'edit': 
-						maiden_management.edit(message, args[0], args[1])
+						maiden_management.edit(message, args[0], args[1]).then(() => {
+							message.reply({ embed: {
+								color: 0x00ff00,
+								description: 'Обновлено',
+								author: {
+									name: discord_client.user.username,
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+							}})
+						}).catch((ex) => {
+							message.reply({ embed: {
+								color: 0xff0000,
+								description: ex,
+								author: {
+									name: discord_client.user.username,
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+							}})
+						})
 					break
 					// редакт себя юзером
 					case 'set': 

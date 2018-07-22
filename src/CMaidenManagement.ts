@@ -153,16 +153,15 @@ export class CMaidenManagement {
 			throw "Введи ник или DiscordID"
 		}
 
-		const angel_maiden = this._database.maidens.findOne({ $or: [
-			{ discordid: signature }, 
-			{ nick: signature }
-		] })
-		
+		const angel_maiden = 
+			this._database.maidens.findOne({ discordid: signature }) || 
+			this._database.maidens.findOne({ nick: signature })
+
 		if(!angel_maiden) { 
 			throw "Нет такой англодевы"
 		}
 
-		if(!new_nick) {
+		if(!new_nick || new_nick === angel_maiden.nick) {
 			throw "Введи новый ник"
 		}
 		

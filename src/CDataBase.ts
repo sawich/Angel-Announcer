@@ -1,5 +1,5 @@
-//import { Loki, Collection } from "@lokidb/loki"
-import { Loki, Collection } from "@lokidb/loki/types/loki/src"
+import { Loki, Collection } from "@lokidb/loki"
+//import { Loki, Collection } from "@lokidb/loki/types/loki/src"
 import { FSStorage } from "@lokidb/fs-storage"
 import { existsSync, mkdirSync } from "fs";
 
