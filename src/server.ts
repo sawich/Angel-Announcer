@@ -39,7 +39,7 @@ import { CMediaPlayer } from './CMediaPlayer';
 // import { CManga } from './CManga'
 // import { CMediaPlayer from './CMediaPlayer'
 
-import { Permissions, Message, Client } from 'discord.js'
+import { Permissions, Message, Client, GuildMember } from 'discord.js'
 import * as body_parser from 'body-parser'
 
 import * as express from 'express'
@@ -53,78 +53,57 @@ import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
 
 class CApp {
 	constructor() {
-		new Promise (async () => {
+		new Promise(async () => {
+			const database = new CDataBase()
+			const database_load = database.load()
 
 			const discord_client: Client = new Client
 
 			try {
 				await discord_client.login(process.env.DISCORD_TOKEN)
-			} catch (ex) {
+			} catch(ex) {
 				console.error(ex)
 				process.exit(1)
 			}
 
 			//
-			const guilds                   = new CGuilds(discord_client)
-			const channels                 = new CChannels(guilds)
-			const database                 = new CDataBase()
-			const maiden_management        = new CMaidenManagement(database, discord_client)
+			const guilds   = new CGuilds(discord_client)
+			const channels = new CChannels(guilds)
+
+			await database_load
+
+			const maiden_management        = new CMaidenManagement(database, discord_client, guilds, channels)
 			const user_playlist_management = new CUserPlaylistManagement()
 			const vk_observer              = new CVkObserver(database, discord_client, guilds, channels)
+			const media_player             = new CMediaPlayer(discord_client, channels, guilds)
 
 			//
 			const commands = new CCommands(new Map <string, Function> ([
 			// CUserManagement
 
-				[ 'user', (message: Message, args: string[]) => {
+				[ 'maidens', async (message: Message, args: string[]) : Promise <void> => {
 					if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR) || !args) { return }
 
 					switch (args.shift()) {
-						case 'del': {
-							if(!args.length) {
-								message.reply({ embed: {
-									color: 0xff0000,
-									description: 'Введи ник',
-									author: {
-										name: discord_client.user.username,
-										icon_url: discord_client.user.avatarURL,
-										url: config.site
-									},
-								}})
-								return
-							}
-
-							maiden_management.delete(message, args[0])
-							break
-						}
-						case 'list': {
-							maiden_management.list(message)
-							break
-						}
-						case 'add': {
-							if(args.length < 2) {
-								message.reply({ embed: {
-									color: 0xff0000,
-									description: 'Введи ник и discord id',
-									author: {
-										name: discord_client.user.username,
-										icon_url: discord_client.user.avatarURL,
-										url: config.site
-									},
-								}})
-								return
-							}
-
-							maiden_management.add(message, args)
-							break
-						}
+					// список дев
+					case 'list': 
+						maiden_management.list(message, parseInt(args[0]) || 1)
+					break
+					// редакт админом
+					case 'edit': 
+						maiden_management.edit(message, args[0], args[1])
+					break
+					// редакт себя юзером
+					case 'set': 
+						maiden_management.set(message, args[0])
+					break
 					}
 				} ],
 
-				[ 'pl', async (message: Message, args: string[]) => {
-					const playlist = await user_playlist_management.get (message)
+				[ 'pl', async(message: Message, args: string[]) => {
+					const playlist = await user_playlist_management.get(message)
 					
-					switch (args.shift()) {
+					switch(args.shift()) {
 						case 'del': break
 						case 'add': break
 						case 'list': break
@@ -133,12 +112,11 @@ class CApp {
 
 			// CUserPlaylistManagement
 
-				[ 'ping', (message: Message) => message.reply ('pong')]
+				[ 'ping', (message: Message) => message.reply('pong')]
 			]))
 
-			const media_player: CMediaPlayer = new CMediaPlayer(discord_client, channels, guilds)
 			discord_client.on('message', (message: Message) => {
-				if (message.author.bot) { return }
+				if(message.author.bot) { return }
 
 				commands.execute(message)
 				 media_player.join(message)
@@ -146,13 +124,13 @@ class CApp {
 
 			//
 			const app: Express = express()
-			app.use (body_parser.json ())
-			app.use (body_parser.urlencoded ({ extended: true }))
+			app.use(body_parser.json())
+			app.use(body_parser.urlencoded({ extended: true }))
 
-			app.post ('/', (req: Request, res: Response) => {
+			app.post('/', (req: Request, res: Response) => {
 				const body = req.body
 
-				switch (body.type) {
+				switch(body.type) {
 				case 'group_join':
 					vk_observer.group_join(body as group_join)
 				break
@@ -167,7 +145,7 @@ class CApp {
 				return
 				}
 
-				res.sendStatus (200)
+				res.sendStatus(200)
 			})
 
 
@@ -194,7 +172,7 @@ class CApp {
 			server.once('listening', () => {
 				const addr = server.address() as AddressInfo;
 
-				channels.log.send ({ embed: {
+				channels.log.send({ embed: {
 					color: 0x00ff00,
 					description: `App listening at http://${addr.address}:${addr.port}`,
 					author: {
@@ -206,7 +184,7 @@ class CApp {
 			})
 
 			//
-			channels.log.send ({ embed: {
+			channels.log.send({ embed: {
 				color: 0x00ff00,
 				description: `Logged in as ${discord_client.user.tag}!`,
 				author: {
@@ -216,7 +194,7 @@ class CApp {
 				},
 			}})
 
-			console.log (`Logged in as ${discord_client.user.tag}!`)
+			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})
 	}
 }

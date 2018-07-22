@@ -3,7 +3,7 @@
     "inlineSourceMap": true,
     "module": "commonjs",
     "alwaysStrict": true,
-    "target": "es6",
+    "target": "esnext",
     "outDir": "./build/",
     "rootDir": "./src/",
     "moduleResolution": "node",

@@ -8,6 +8,10 @@ export default Object.freeze({
 		test: '407454794056204290',
 		announcement: '407369776625614848'
 	},
+	roles: {
+		angel_maiden: '405048080816275456',
+		angel_maiden_half: '441279362747203594'
+	},
 	team_icon_url: 'https://pp.userapi.com/c638721/v638721291/6ead8/PkwxZ165LXA.jpg',
 	site: 'https://angeldev.org',
 	discord: {

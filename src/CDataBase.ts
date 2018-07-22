@@ -1,5 +1,5 @@
-import { Loki, Collection } from "@lokidb/loki"
-//import { Loki, Collection } from "@lokidb/loki/types/loki/src"
+//import { Loki, Collection } from "@lokidb/loki"
+import { Loki, Collection } from "@lokidb/loki/types/loki/src"
 import { FSStorage } from "@lokidb/fs-storage"
 import { existsSync, mkdirSync } from "fs";
 
@@ -12,7 +12,7 @@ export class CDataBase {
 
 	private _maidens: Collection <CDataBaseMaidenModel>
 
-	private async init() {
+	async load() {
 		if (!existsSync('./build/database')) {
 			mkdirSync('./build/database')
 		}
@@ -21,7 +21,7 @@ export class CDataBase {
 
 		try {
 			const adapter: FSStorage = new FSStorage
-			await database.initializePersistence({ adapter, autosave: true, autosaveInterval: 4000 })
+			await database.initializePersistence({ adapter, autosave: true })
 		} catch (ex) {
 			console.trace(ex)
 			process.exit(1)
@@ -44,9 +44,7 @@ export class CDataBase {
 		}
 	}
 
-	constructor() {
-		this.init()
-	}
+	constructor() {}
 
 	get maidens() { return this._maidens }
 
