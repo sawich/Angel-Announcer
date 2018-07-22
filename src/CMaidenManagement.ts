@@ -1,9 +1,15 @@
 import config from './config/config.js'
-import { CDataBase } from './CDataBase.js'
+import { CDataBase, CDataBaseMaidenModel } from './CDataBase.js'
 import { CGuilds } from './CGuilds.js'
 
 import { Client, Message, GuildMember, Permissions } from 'discord.js'
 import { CChannels } from './CChannels.js';
+
+export type CMaidenManagementList = {
+	page: number,
+	total: number,
+	list: Array <CDataBaseMaidenModel>
+} 
 
 export class CMaidenManagement {
 	private _database: CDataBase
@@ -146,7 +152,7 @@ export class CMaidenManagement {
 		})
 	}
 
-	async edit(message: Message, signature: string, new_nick: string) {
+	async edit(message: Message, signature: string, new_nick: string): Promise <void> {
 		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
 
 		if(!signature) { 
@@ -169,7 +175,7 @@ export class CMaidenManagement {
 		this._database.maidens.update(angel_maiden)
 	}
 
-	async set(message: Message, new_nick: string) {
+	async set(message: Message, new_nick: string): Promise <void> {
 		const angel_maiden = this._database.maidens.findOne({ discordid: message.member.id })
 		if(!angel_maiden) { return }
 
@@ -186,29 +192,18 @@ export class CMaidenManagement {
 	 * @param {number} page number of page to output
 	 * @param {number} limit count of fields to output. 25 - default discord fields limit
 	 */
-	public async list(message: Message, page: number, limit: number = 25) {
-		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
-		
+	public async list(page: number, limit: number = 25): Promise <CMaidenManagementList>{		
 		const maidens = this._database.maidens.count()
 
 		const offset = (--page) * limit
 		const angel_maidens = this._database.maidens.chain().find().offset((offset >= maidens || offset < 0) ? (page = 0) : offset).limit(limit).data()
 		
-		message.reply({ embed: {
-			color: 0x00bfff,
-			footer: {
-				text: angel_maidens.length > 0 ? `Страница ${page + 1} из ${Math.ceil(maidens / limit) }` : '',
-			},
-			author: {
-				name: 'Англодевы',
-				icon_url: this._bot.user.avatarURL,
-				url: config.site
-			},
-			description: angel_maidens.length > 0 ? '' : '*Пусто*',
-			fields: angel_maidens.map((angel_maiden) => {
-				const find = message.guild.members.get(angel_maiden.discordid)
-				return { name: angel_maiden.nick, value:(find ? `*${find}*` : '*—*'), inline: true }
-			})
-		}})
+		if(angel_maidens.length <= 0) { throw null }
+
+		return {
+			page: page + 1,
+			total: Math.ceil(maidens / limit),
+			list: angel_maidens
+		}
 	}
 }

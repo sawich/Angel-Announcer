@@ -29,7 +29,7 @@
 
 import config from './config/config.js'
 
-import { CMaidenManagement } from './CMaidenManagement.js'
+import { CMaidenManagement, CMaidenManagementList } from './CMaidenManagement.js'
 import { CVkObserver, group_leave, group_join } from './CVkObserver'
 import { CChannels } from './CChannels'
 import { CCommands } from './CCommands'
@@ -87,11 +87,40 @@ class CApp {
 					switch (args.shift()) {
 					// список дев
 					case 'list': 
-						maiden_management.list(message, parseInt(args[0]) || 1)
+						try {
+							const result: CMaidenManagementList = await maiden_management.list(parseInt(args[0]) || 1)
+						 
+							message.reply({ embed: {
+								color: 0x00bfff,
+								footer: {
+									text: `Страница ${result.page + 1} из ${ result.total }`,
+								},
+								author: {
+									name: 'Англодевы',
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+								fields: result.list.map((angel_maiden) => {
+									const find = message.guild.members.get(angel_maiden.discordid)
+									return { name: angel_maiden.nick, value:(find ? `*${find}*` : '*—*'), inline: true }
+								})
+							}})
+						} catch {
+							message.reply({ embed: {
+								color: 0x00bfff,
+								author: {
+									name: 'Англодевы',
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+								description: '*Пусто*'
+							}})
+						}
 					break
 					// редакт админом
 					case 'edit': 
-						maiden_management.edit(message, args[0], args[1]).then(() => {
+						try {
+							await maiden_management.edit(message, args[0], args[1])
 							message.reply({ embed: {
 								color: 0x00ff00,
 								description: 'Обновлено',
@@ -101,7 +130,7 @@ class CApp {
 									url: config.site
 								},
 							}})
-						}).catch((ex) => {
+						} catch(ex) {
 							message.reply({ embed: {
 								color: 0xff0000,
 								description: ex,
@@ -111,11 +140,12 @@ class CApp {
 									url: config.site
 								},
 							}})
-						})
+						}
 					break
 					// редакт себя юзером
 					case 'set': 
-						maiden_management.set(message, args[0]).then(() => {
+						try {
+							await maiden_management.set(message, args[0])
 							message.reply({ embed: {
 								color: 0x00ff00,
 								description: 'Обновлено',
@@ -125,7 +155,7 @@ class CApp {
 									url: config.site
 								},
 							}})
-						}).catch((ex) => {
+						} catch(ex) {
 							message.reply({ embed: {
 								color: 0xff0000,
 								description: ex,
@@ -135,7 +165,7 @@ class CApp {
 									url: config.site
 								},
 							}})
-						})
+						}
 					break
 					}
 				} ],

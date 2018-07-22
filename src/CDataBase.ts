@@ -20,7 +20,7 @@ export class CDataBase {
 		}
 
 		const database = new Loki('./build/database/angeldev.json')
-
+		
 		try {
 			const adapter: FSStorage = new FSStorage
 			await database.initializePersistence({ adapter, autosave: true })
