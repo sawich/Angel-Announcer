@@ -8,6 +8,8 @@ export interface CDataBaseMaidenModel {
 	discordid: string
 }
 
+export type CDataBaseMaidenModel_t = Collection <CDataBaseMaidenModel>
+
 export class CDataBase {
 
 	private _maidens: Collection <CDataBaseMaidenModel>

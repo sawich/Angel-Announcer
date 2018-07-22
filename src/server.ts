@@ -82,7 +82,7 @@ class CApp {
 			// CUserManagement
 
 				[ 'maidens', async (message: Message, args: string[]) : Promise <void> => {
-					if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR) || !args) { return }
+					if (!args) { return }
 
 					switch (args.shift()) {
 					// список дев
@@ -95,7 +95,27 @@ class CApp {
 					break
 					// редакт себя юзером
 					case 'set': 
-						maiden_management.set(message, args[0])
+						maiden_management.set(message, args[0]).then(() => {
+							message.reply({ embed: {
+								color: 0x00ff00,
+								description: 'Обновлено',
+								author: {
+									name: discord_client.user.username,
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+							}})
+						}).catch((ex) => {
+							message.reply({ embed: {
+								color: 0xff0000,
+								description: ex,
+								author: {
+									name: discord_client.user.username,
+									icon_url: discord_client.user.avatarURL,
+									url: config.site
+								},
+							}})
+						})
 					break
 					}
 				} ],

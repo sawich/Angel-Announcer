@@ -146,15 +146,35 @@ export class CMaidenManagement {
 		})
 	}
 
-	async edit(message: Message, discordid: string, nick: string) {
+	async edit(message: Message, signature: string, new_nick: string) {
 		if (!message.member.hasPermission (Permissions.FLAGS.ADMINISTRATOR)) { return }
+
+		if(!signature) { 
+			throw "Введи ник или DiscordID"
+		}
+
+		const angel_maiden = this._database.maidens.findOne({ $or: [
+			{ discordid: signature }, 
+			{ nick: signature }
+		] })
 		
+		if(!angel_maiden) { 
+			throw "Нет такой англодевы"
+		}
+
+		if(!new_nick) {
+			throw "Введи новый ник"
+		}
+		
+		angel_maiden.nick = new_nick
+		this._database.maidens.update(angel_maiden)
 	}
 
 	async set(message: Message, new_nick: string) {
 		const angel_maiden = this._database.maidens.findOne({ discordid: message.member.id })
-		if(null === angel_maiden) { return }
-		if(undefined === new_nick) {
+		if(!angel_maiden) { return }
+
+		if(!new_nick) {
 			throw "Введи новый ник"
 		}
 
