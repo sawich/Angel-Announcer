@@ -25,7 +25,7 @@ export class CCommands {
 			return
 		}
 
-		const [ command, ...args ] = await CCommands.parse_args (message.content.slice(config.discord.prefix.length).trimRight())
+		const [ command, ...args ] = await CCommands.parse_args (message.content.slice(config.discord.prefix.length).trim())
 
 		const cmd: Function = this._cmds.get (command.toLowerCase())
 		if (!cmd) { return }

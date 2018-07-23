@@ -39,7 +39,7 @@ import { CMediaPlayer } from './CMediaPlayer';
 // import { CManga } from './CManga'
 // import { CMediaPlayer from './CMediaPlayer'
 
-import { Permissions, Message, Client, GuildMember } from 'discord.js'
+import { Permissions, Message, Client, GuildMember, RichEmbed } from 'discord.js'
 import * as body_parser from 'body-parser'
 
 import * as express from 'express'
@@ -48,7 +48,6 @@ import { Request, Response, Express } from 'express'
 import { Server } from 'http'
 import { AddressInfo } from 'net';
 import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
-
 
 
 class CApp {
@@ -65,14 +64,14 @@ class CApp {
 				console.error(ex)
 				process.exit(1)
 			}
-
+			
 			//
 			const guilds   = new CGuilds(discord_client)
 			const channels = new CChannels(guilds)
 
 			await database_load
 
-			const maiden_management        = new CMaidenManagement(database, discord_client, guilds, channels)
+			const maiden_management        = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
 			const user_playlist_management = new CUserPlaylistManagement()
 			const vk_observer              = new CVkObserver(database, discord_client, guilds, channels)
 			const media_player             = new CMediaPlayer(discord_client, channels, guilds)

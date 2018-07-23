@@ -1,5 +1,5 @@
 import config from './config/config.js'
-import { CDataBase, CDataBaseMaidenModel } from './CDataBase.js'
+import { CDataBase, CDataBaseMaidenModel, CDataBaseMaidenModel_t } from './CDataBase.js'
 import { CGuilds } from './CGuilds.js'
 
 import { Client, Message, GuildMember, Permissions } from 'discord.js'
@@ -12,21 +12,26 @@ export type CMaidenManagementList = {
 } 
 
 export class CMaidenManagement {
-	private _database: CDataBase
+	private _maidens: CDataBaseMaidenModel_t
 	private _bot: Client
 
-	constructor(database: CDataBase, bot: Client, guilds: CGuilds, channels: CChannels) {
-		this._database = database
+	constructor(
+		maidens: CDataBaseMaidenModel_t,
+		bot: Client,
+		guilds: CGuilds,
+		channels: CChannels
+	) {
+		this._maidens = maidens
 		this._bot = bot
 
 		// добавление англодев, которые получили крылья, пока бот спал	
 		const new_maidens = [ 
-			...guilds.main.roles.get(config.roles.angel_maiden).members.filterArray((member) => !this._database.maidens.findOne({ discordid: member.id })),
-			...guilds.main.roles.get(config.roles.angel_maiden_half).members.filterArray((member) => !this._database.maidens.findOne({ discordid: member.id }))
+			...guilds.main.roles.get(config.roles.angel_maiden).members.filterArray((member) => !this._maidens.findOne({ discordid: member.id })),
+			...guilds.main.roles.get(config.roles.angel_maiden_half).members.filterArray((member) => !this._maidens.findOne({ discordid: member.id }))
 		]
 		
 		if(new_maidens.length > 0) {
-			this._database.maidens.insert(new_maidens.map((member) => ({
+			this._maidens.insert(new_maidens.map((member) => ({
 				nick: member.id,
 				discordid: member.id
 			})))
@@ -43,12 +48,12 @@ export class CMaidenManagement {
 		}
 	
 		// удаление англодев, которые утратили крылья, пока бот спал	
-		const ex_angel_maiden = this._database.maidens.chain().data().reduce((array, angel_maiden) => {
+		const ex_angel_maiden = this._maidens.chain().data().reduce((array, angel_maiden) => {
 			const member = guilds.main.members.get(angel_maiden.discordid)
 			const result = !member || (!(!member.roles.has(config.roles.angel_maiden) && !member.roles.has(config.roles.angel_maiden_half)))
 
 			if(!result) {
-				this._database.maidens.remove(angel_maiden)
+				this._maidens.remove(angel_maiden)
 
 				array.push({
 					name: angel_maiden.nick,
@@ -80,7 +85,7 @@ export class CMaidenManagement {
 			if((!old_user.roles.has(config.roles.angel_maiden) && !old_user.roles.has(config.roles.angel_maiden_half)) &&
 				(new_user.roles.has(config.roles.angel_maiden) || new_user.roles.has(config.roles.angel_maiden_half))
 			) {
-				const maiden = this._database.maidens.insertOne({
+				const maiden = this._maidens.insertOne({
 					nick: new_user.id,
 					discordid: new_user.id
 				})
@@ -117,14 +122,14 @@ export class CMaidenManagement {
 			if((old_user.roles.has(config.roles.angel_maiden) || old_user.roles.has(config.roles.angel_maiden_half)) &&
 				(!new_user.roles.has(config.roles.angel_maiden) && !new_user.roles.has(config.roles.angel_maiden_half))
 			) {
-				const maiden = this._database.maidens.findOne({
+				const maiden = this._maidens.findOne({
 					discordid: new_user.id
 				})
 
 				if(!maiden) {
 					channels.log.send({ embed: {
 						color: 0xff0000,
-						description: 'Ошибка удаления записи Ничего не найдено',
+						description: 'Ошибка удаления записи. Ничего не найдено',
 						author: {
 							name: 'Бывшая англодева',
 							icon_url: this._bot.user.avatarURL,
@@ -147,7 +152,7 @@ export class CMaidenManagement {
 					}]
 				}})
 
-				this._database.maidens.remove(maiden)
+				this._maidens.remove(maiden)
 			}
 		})
 	}
@@ -160,8 +165,8 @@ export class CMaidenManagement {
 		}
 
 		const angel_maiden = 
-			this._database.maidens.findOne({ discordid: signature }) || 
-			this._database.maidens.findOne({ nick: signature })
+			this._maidens.findOne({ discordid: signature }) || 
+			this._maidens.findOne({ nick: signature })
 
 		if(!angel_maiden) { 
 			throw "Нет такой англодевы"
@@ -172,11 +177,11 @@ export class CMaidenManagement {
 		}
 		
 		angel_maiden.nick = new_nick
-		this._database.maidens.update(angel_maiden)
+		this._maidens.update(angel_maiden)
 	}
 
 	async set(message: Message, new_nick: string): Promise <void> {
-		const angel_maiden = this._database.maidens.findOne({ discordid: message.member.id })
+		const angel_maiden = this._maidens.findOne({ discordid: message.member.id })
 		if(!angel_maiden) { return }
 
 		if(!new_nick) {
@@ -184,7 +189,7 @@ export class CMaidenManagement {
 		}
 
 		angel_maiden.nick = new_nick
-		this._database.maidens.update(angel_maiden)
+		this._maidens.update(angel_maiden)
 	}
 
 	/**
@@ -193,10 +198,10 @@ export class CMaidenManagement {
 	 * @param {number} limit count of fields to output. 25 - default discord fields limit
 	 */
 	public async list(page: number, limit: number = 25): Promise <CMaidenManagementList>{		
-		const maidens = this._database.maidens.count()
+		const maidens = this._maidens.count()
 
 		const offset = (--page) * limit
-		const angel_maidens = this._database.maidens.chain().find().offset((offset >= maidens || offset < 0) ? (page = 0) : offset).limit(limit).data()
+		const angel_maidens = this._maidens.chain().find().offset((offset >= maidens || offset < 0) ? (page = 0) : offset).limit(limit).data()
 		
 		if(angel_maidens.length <= 0) { throw null }
 

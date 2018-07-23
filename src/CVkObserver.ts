@@ -116,7 +116,8 @@ export class CVkObserver {
           },
           thumbnail: {
             url: response.photo_50
-          }
+          },
+          timestamp: new Date
         }})
       }
     }).catch (console.log)
