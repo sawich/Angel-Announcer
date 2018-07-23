@@ -92,7 +92,7 @@ class CApp {
 							message.reply({ embed: {
 								color: 0x00bfff,
 								footer: {
-									text: `Страница ${result.page + 1} из ${ result.total }`,
+									text: `Страница ${result.page} из ${ result.total }`,
 								},
 								author: {
 									name: 'Англодевы',
