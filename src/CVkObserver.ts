@@ -42,24 +42,23 @@ export class CVkObserver {
     if (!post.includes (config.vk.tag)) { return }
 
     // users link replace to discord users
-    const workers = post.match (/Над главой работали:\s+(.*)\n/i)[0]
-    const angel_info_regexp = /\[(id|club)(\d+)\|(.*?)\]|(#.*?)[,|\n]/gi
+    const angelmaidens = post.match (/Над главой работали:(?:\s+|)(.*)(?:\n|$)/i)[1] || ''
+    const angelmaiden_name = /[\||#](.*?)(?:,|\]|$|\n)/gi
 
     let angel_info = []
     let chapter_workers = []
-    while (null != (angel_info = angel_info_regexp.exec (workers))) {
-      const angel_name = (angel_info[3] || angel_info[4].slice (1)).trim ()
-      
+    while (null != (angel_info = angelmaiden_name.exec (angelmaidens))) {
       let display_user = null
-      const user_data = this._database.maidens.findOne({ nick: angel_name.toLowerCase () })
-      if (user_data) {
-        display_user = this._guilds.main.members.get (user_data.discordid)
+      const angelmaiden = this._database.maidens.findOne({ nick: angel_info[1].toLowerCase () })
+      if (angelmaiden) {
+        display_user = this._guilds.main.members.get (angelmaiden.discordid)
       }
-      chapter_workers.push (display_user || angel_name)
-    }
+
+      chapter_workers.push (display_user || angel_info[1])
+  }
 
     // readers link replace to discord-like link
-    const link_info_regexp = /#(\S+): (\S+)/gi
+    const link_info_regexp = /#(\S+):.*?(http\S+)/gi
 
     let link_info = null
     let fields = []
@@ -73,7 +72,7 @@ export class CVkObserver {
 
     return this._channels.announcement.send ({ embed: {
       author: {
-        name: post.split ('\n')[0],
+        name: post.split ('\n', 1)[0],
         icon_url: this._bot.user.avatarURL,
         url: config.site
       },
@@ -81,7 +80,7 @@ export class CVkObserver {
       color: 0x00bfff,
       description: `*Над главой работали: ${chapter_workers.join (', ')}*`,
       footer: {
-        text: post.match (/(Переведено с .*?)[\.|\n]/i)[0],
+        text: post.match (/Переведено с .*?(?:\.|\n|$)/i)[0] || 'Язык перевода не указан',
         icon_url: config.team_icon_url
       }
     }})
