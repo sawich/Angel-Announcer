@@ -23,7 +23,7 @@ export class CDataBase {
 		
 		try {
 			const adapter: FSStorage = new FSStorage
-			await database.initializePersistence({ adapter, autosave: true })
+			await database.initializePersistence({ adapter, autosave: true, autosaveInterval: 4000 })
 		} catch (ex) {
 			console.trace(ex)
 			process.exit(1)
