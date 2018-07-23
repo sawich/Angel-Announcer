@@ -21,12 +21,12 @@ export class CChannels {
 			console.log (`channels.test [id:${config.channelid.test}] not found`)
 			process.exit(1)
 		}
-		this._announcement = this._log
-		/*this._announcement = guilds.main.channels.get (config.channelid.announcement) as TextChannel
+		
+		this._announcement = guilds.main.channels.get (config.channelid.announcement) as TextChannel
 		if (!this._announcement) {
 			console.log (`channels.announcement [id:${config.channelid.announcement}] not found`)
 			process.exit(1)
-		}*/
+		}
 	}
 
 	// channel for logs | \WoW/
