@@ -23,7 +23,7 @@ export class CDataBase {
 		if (!existsSync(path)) {
 			mkdirSync(path)
 		}
-		const database = new Loki()
+		const database = new Loki(fullpath)
 		const adapter: FSStorage = new FSStorage
 		
 		try {
