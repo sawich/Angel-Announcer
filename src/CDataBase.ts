@@ -1,7 +1,8 @@
 import { Loki, Collection } from "@lokidb/loki"
 //import { Loki, Collection } from "@lokidb/loki/types/loki/src"
 import { FSStorage } from "@lokidb/fs-storage"
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync } from "fs"
+import { resolve } from "path";
 
 export interface CDataBaseMaidenModel {
 	nick: string
@@ -15,14 +16,16 @@ export class CDataBase {
 	private _maidens: Collection <CDataBaseMaidenModel>
 
 	async load() {
-		if (!existsSync('./build/database')) {
-			mkdirSync('./build/database')
+		const dbname = 'angeldev.json'
+		const path = resolve(__dirname, 'database')
+		if (!existsSync(path)) {
+			mkdirSync(path)
 		}
 
-		const database = new Loki('./build/database/angeldev.json')
+		const database = new Loki(resolve(path, dbname))
+		const adapter: FSStorage = new FSStorage
 		
 		try {
-			const adapter: FSStorage = new FSStorage
 			await database.initializePersistence({ adapter, autosave: true, autosaveInterval: 4000 })
 		} catch (ex) {
 			console.trace(ex)
@@ -31,7 +34,7 @@ export class CDataBase {
 
 		if (existsSync(database.filename)) {
 			try {
-				await database.loadDatabase({})
+				await database.loadDatabase()
 			} catch (ex) {
 				console.trace(ex)
 				process.exit(1)

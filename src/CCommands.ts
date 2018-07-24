@@ -17,7 +17,9 @@ export class CCommands {
 	}
 	
 	static async parse_args (str: string) : Promise <string[]> {
-		return str.match(/"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S)+/g).join().replace(/"/g, '').split(',')
+		const args = str.match(/"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S)+/g)
+		
+		return (args || ['']).join().replace(/"/g, '').split(',')
 	}
 
 	async execute (message: Message) : Promise <void> {

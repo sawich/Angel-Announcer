@@ -182,7 +182,9 @@ export class CMaidenManagement {
 
 	async set(message: Message, new_nick: string): Promise <void> {
 		const angel_maiden = this._maidens.findOne({ discordid: message.member.id })
-		if(!angel_maiden) { return }
+		if(!angel_maiden) { 
+			throw 'Ошибка'
+		 }
 
 		if(!new_nick) {
 			throw "Введи новый ник"
