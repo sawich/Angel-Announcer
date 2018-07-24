@@ -18,11 +18,12 @@ export class CDataBase {
 	async load() {
 		const dbname = 'angeldev.json'
 		const path = resolve(__dirname, 'database')
+		const fullpath = resolve(path, dbname)
+
 		if (!existsSync(path)) {
 			mkdirSync(path)
 		}
-
-		const database = new Loki(resolve(path, dbname))
+		const database = new Loki()
 		const adapter: FSStorage = new FSStorage
 		
 		try {
@@ -32,7 +33,7 @@ export class CDataBase {
 			process.exit(1)
 		}
 
-		if (existsSync(database.filename)) {
+		if (existsSync(fullpath)) {
 			try {
 				await database.loadDatabase()
 			} catch (ex) {
