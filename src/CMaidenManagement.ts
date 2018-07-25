@@ -72,7 +72,7 @@ export class CMaidenManagement extends EventEmitter {
 			super.emit('maintenance_remove', ex_angelmaidens)
 		}		
 
-		
+		//
 		this._bot.on('guildMemberUpdate', async (
 			old_user: GuildMember, 
 			new_user: GuildMember
