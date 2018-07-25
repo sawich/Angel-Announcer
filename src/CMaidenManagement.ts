@@ -159,9 +159,9 @@ export class CMaidenManagement extends EventEmitter {
 			throw "Введи новый ник"
 		}
 
-		angel_maiden.update({
+		await angel_maiden.update({
 			$set: { nick: new_nick }
-		}).then(r => console.log).catch(r => console.log)
+		})
 	}
 
 	async set(message: Message, new_nick: string): Promise <void> {
@@ -171,11 +171,11 @@ export class CMaidenManagement extends EventEmitter {
 			throw 'Ошибка'
 		 }
 
-		if(!new_nick) {
+		if(!new_nick || new_nick === angel_maiden['nick'] || !!(await this._maidens.findOne({ nick: new_nick }))) {
 			throw "Введи новый ник"
 		}
 		
-		angel_maiden.update({
+		await angel_maiden.update({
 			$set: { nick: new_nick }
 		})
 	}
