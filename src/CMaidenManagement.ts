@@ -6,19 +6,26 @@ import { Client, Message, GuildMember, Permissions } from 'discord.js'
 import { CChannels } from './CChannels.js';
 import { Model, Document, Types } from 'mongoose';
 
+import { EventEmitter } from "events";
+
 export type CMaidenManagementList = {
 	page: number,
 	total: number,
 	list: Array <Document>
 } 
 
-export class CMaidenManagement {
+export type CMaidenManagementItem = {
+	member: GuildMember,
+	nick: String
+}
+
+export class CMaidenManagement extends EventEmitter {
 	private _maidens: Model <Document>
 	private _bot: Client
 	private _guilds: CGuilds
 	private _channels: CChannels
 
-	async init() {
+	async load() {
 		const docs = await this._maidens.find({})
 
 		const angelmaidens = [
@@ -28,12 +35,12 @@ export class CMaidenManagement {
 
 		// добавление англодев, которые получили крылья, пока бот спал
 		const new_angelmaidens = angelmaidens.filter((angelmaiden) => {
-			if(undefined !== docs.find((value) => value['id'] == angelmaiden.id)) {
+			if(undefined !== docs.find((value) => value['discord_id'] == angelmaiden.id)) {
 				return false;
 			}
 
 			this._maidens.create({
-				id: angelmaiden.id,
+				discord_id: angelmaiden.id,
 				nick: angelmaiden.id
 			})
 
@@ -41,30 +48,20 @@ export class CMaidenManagement {
 		})
 
 		if(new_angelmaidens.length > 0) {
-			this._channels.log.send({ embed: {
-				color: 0x00bfff,
-				description: new_angelmaidens.length > 25 ? `25 из ${new_angelmaidens.length}` : '',
-				author: {
-					name: 'Новые англодевы',
-					icon_url: this._bot.user.avatarURL,
-					url: config.site
-				},
-				fields: new_angelmaidens.slice(0, 25).map((maiden) => ({ name: maiden.id, value: `${maiden}`, inline: true }))
-			}})
+			super.emit('maintenance_add', new_angelmaidens)
 		}
 
 		// удаление англодев, которые утратили крылья, пока бот спал
 		const roles = [ config.roles.angel_maiden, config.roles.angel_maiden_half ]
 
-		const ex_angelmaidens = docs.reduce((array, angel_maiden) => {
-			const member = this._guilds.main.members.get(angel_maiden['id'])
+		const ex_angelmaidens = docs.reduce((array:CMaidenManagementItem[], angel_maiden) => {
+			const member = this._guilds.main.members.get(angel_maiden['discord_id'])
 			if(!member || !member.roles.some((role) => roles.includes(role.id))) {
-				angel_maiden.remove()
 				array.push({
-					name: angel_maiden['nick'],
-					value: `${member || '*Англодева покинула сервер*'}`,
-					inline: true
+					member,
+					nick: angel_maiden['nick']
 				})
+				angel_maiden.remove()
 			}
 
 			return array
@@ -72,16 +69,7 @@ export class CMaidenManagement {
 		
 
 		if(ex_angelmaidens.length > 0) {
-			this._channels.log.send({ embed: {
-				color: 0x00bfff,
-				description: ex_angelmaidens.length > 25 ? `25 из ${ex_angelmaidens.length}` : '',
-				author: {
-					name: 'Бывшие англодевы',
-					icon_url: this._bot.user.avatarURL,
-					url: config.site
-				},
-				fields: ex_angelmaidens.slice(0, 25)
-			}})
+			super.emit('maintenance_remove', ex_angelmaidens)
 		}		
 
 		
@@ -96,23 +84,11 @@ export class CMaidenManagement {
 				try {
 					await this._maidens.create({
 						nick: new_user.id,
-						id: new_user.id
+						discord_id: new_user.id
 					})
 
-					this._channels.log.send({ embed: {
-						color: 0x00bfff,
-						author: {
-							name: 'Новая англодева',
-							icon_url: this._bot.user.avatarURL,
-							url: config.site
-						},
-						fields: [{
-							name: new_user.id,
-							value: `${new_user}`
-						}]
-					}})
+					super.emit('add', new_user)
 				} catch (ex) {
-					console.error(ex)
 					this._channels.log.send({ embed: {
 						color: 0xff0000,
 						description: `Ошибка добавления записи.\n\n\`\`\`${ex}\`\`\``,
@@ -131,23 +107,13 @@ export class CMaidenManagement {
 			) {
 				try {
 					const maiden = await this._maidens.findOneAndRemove({
-						id: new_user.id
+						discord_id: new_user.id
 					})
 
-					this._channels.log.send({ embed: {
-						color: 0x00bfff,
-						author: {
-							name: 'Бывшая англодева',
-							icon_url: this._bot.user.avatarURL,
-							url: config.site
-						},
-						fields: [{
-							name: maiden['nick'],
-							value: `${new_user}`
-						}]
-					}})
+					super.emit('remove', {
+						member: new_user, nick: maiden['nick']
+					})
 				} catch (ex) {
-					console.error(ex)
 					this._channels.log.send({ embed: {
 						color: 0xff0000,
 						description: `Ошибка удаления записи.\n\n\`\`\`${ex}\`\`\``,
@@ -168,12 +134,12 @@ export class CMaidenManagement {
 		guilds: CGuilds,
 		channels: CChannels
 	) {
+		super()
+
 		this._maidens = maidens
 		this._bot = bot
 		this._guilds = guilds
 		this._channels = channels
-
-		this.init()
 	}
 
 	async edit(message: Message, signature: string, new_nick: string): Promise <void> {
@@ -183,30 +149,23 @@ export class CMaidenManagement {
 			throw "Введи ник или DiscordID"
 		}
 
-		const angel_maiden = 
-			await this._maidens.findOne({ $or: [{ 
-				id: signature
-			}, {
-				nick: signature
-			}] })
+		const angel_maiden = await this._maidens.findOne().or([ { discord_id: signature }, { nick: signature }])
 
 		if(!angel_maiden) { 
 			throw "Нет такой англодевы"
 		}
 
-		if(!new_nick || new_nick === angel_maiden['nick']) {
+		if(!new_nick || new_nick === angel_maiden['nick'] || !!(await this._maidens.findOne({ nick: new_nick }))) {
 			throw "Введи новый ник"
 		}
 
-		this._maidens.update({
-			_id: angel_maiden._id
-		}, {
+		angel_maiden.update({
 			$set: { nick: new_nick }
-		})
+		}).then(r => console.log).catch(r => console.log)
 	}
 
 	async set(message: Message, new_nick: string): Promise <void> {
-		const angel_maiden = await this._maidens.findOne({ id: message.member.id })
+		const angel_maiden = await this._maidens.findOne({ discord_id: message.member.id })
 		
 		if(!angel_maiden) { 
 			throw 'Ошибка'
@@ -215,10 +174,8 @@ export class CMaidenManagement {
 		if(!new_nick) {
 			throw "Введи новый ник"
 		}
-
-		this._maidens.update({
-			_id: angel_maiden._id
-		}, {
+		
+		angel_maiden.update({
 			$set: { nick: new_nick }
 		})
 	}

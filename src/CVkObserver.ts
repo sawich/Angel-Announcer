@@ -51,7 +51,7 @@ export class CVkObserver {
       let display_user = null
       const angelmaiden = await this._database.maidens.findOne({ nick: angel_info[1].toLowerCase () })
       if (angelmaiden) {
-        display_user = this._guilds.main.members.get (angelmaiden['id'])
+        display_user = this._guilds.main.members.get (angelmaiden['discord_id'])
       }
 
       chapter_workers.push (display_user || angel_info[1])

@@ -29,7 +29,7 @@
 
 import config from './config/config.js'
 
-import { CMaidenManagement, CMaidenManagementList } from './CMaidenManagement.js'
+import { CMaidenManagement, CMaidenManagementList, CMaidenManagementItem } from './CMaidenManagement.js'
 import { CVkObserver, group_leave, group_join } from './CVkObserver'
 import { CChannels } from './CChannels'
 import { CCommands } from './CCommands'
@@ -57,7 +57,7 @@ class CApp {
 			const database_load = database.load()
 
 			const discord_client: Client = new Client
-
+			
 			try {
 				await discord_client.login(process.env.DISCORD_TOKEN)
 			} catch(ex) {
@@ -72,10 +72,10 @@ class CApp {
 			process.on('uncaughtException', (ex) => {
 				channels.log.send({ embed: {
 					color: 0xff0000,
-					title: `uncaughtException: ${ex.message}`,
+					title: `${ex.message}`,
 					description: `\`\`\`${ex.stack}\`\`\``,
 					author: {
-						name: discord_client.user.username,
+						name: guilds.main.member(discord_client.user.id).displayName,
 						icon_url: discord_client.user.avatarURL,
 						url: config.site
 					},
@@ -85,10 +85,69 @@ class CApp {
 				console.error((new Date).toUTCString() + ' uncaughtException:', ex.message)
 				console.error(ex.stack)
 			})
-
+			
 			await database_load
 
-			const maiden_management        = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
+			const maiden_management = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
+
+			maiden_management.once('maintenance_add', async (angelmaidens: GuildMember[]) => {
+				channels.log.send({ embed: {
+					color: 0x00ff00,
+					description: angelmaidens.length > 25 ? `25 из ${angelmaidens.length}` : '',
+					author: {
+						name: 'Новые англодевы',
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					fields: angelmaidens.slice(0, 25).map((maiden) => ({ name: maiden.id, value: `${maiden}`, inline: true }))
+				}})
+			})
+
+			maiden_management.once('maintenance_remove',  async (angelmaidens: CMaidenManagementItem[]) => {
+				channels.log.send({ embed: {
+					color: 0xffff00,
+					description: angelmaidens.length > 25 ? `25 из ${angelmaidens.length}` : '',
+					author: {
+						name: 'Бывшие англодевы',
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					fields: angelmaidens.slice(0, 25).map((maiden) => ({ name: maiden.nick, value: `${maiden.member || '—'}`, inline: true }))
+				}})
+			})
+
+			maiden_management.on('add', async (member: GuildMember) => {
+				channels.log.send({ embed: {
+					color: 0x00ff00,
+					author: {
+						name: 'Новая англодева',
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					fields: [{
+						name: member.id,
+						value: `${member}`
+					}]
+				}})
+			})
+
+			maiden_management.on('remove', async (angelmaiden: CMaidenManagementItem) => {
+				channels.log.send({ embed: {
+					color: 0xffff00,
+					author: {
+						name: 'Бывшая англодева',
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					fields: [{
+						name: angelmaiden.nick,
+						value: `${angelmaiden.member || '—'}`
+					}]
+				}})
+			})
+
+			maiden_management.load()
+
 			const user_playlist_management = new CUserPlaylistManagement()
 			const vk_observer              = new CVkObserver(database, discord_client, guilds, channels)
 			const media_player             = new CMediaPlayer(discord_client, channels, guilds)
@@ -117,7 +176,7 @@ class CApp {
 									url: config.site
 								},
 								fields: result.list.map((angel_maiden) => {
-									const find = message.guild.members.get(angel_maiden['id'])
+									const find = message.guild.members.get(angel_maiden['discord_id'])
 									return { name: angel_maiden['nick'], value:(find ? `*${find}*` : '*—*'), inline: true }
 								})
 							}})
@@ -141,7 +200,7 @@ class CApp {
 								color: 0x00ff00,
 								description: 'Обновлено',
 								author: {
-									name: discord_client.user.username,
+									name: guilds.main.member(discord_client.user.id).displayName,
 									icon_url: discord_client.user.avatarURL,
 									url: config.site
 								},
@@ -151,7 +210,7 @@ class CApp {
 								color: 0xff0000,
 								description: ex,
 								author: {
-									name: discord_client.user.username,
+									name: guilds.main.member(discord_client.user.id).displayName,
 									icon_url: discord_client.user.avatarURL,
 									url: config.site
 								},
@@ -166,7 +225,7 @@ class CApp {
 								color: 0x00ff00,
 								description: 'Обновлено',
 								author: {
-									name: discord_client.user.username,
+									name: guilds.main.member(discord_client.user.id).displayName,
 									icon_url: discord_client.user.avatarURL,
 									url: config.site
 								},
@@ -176,7 +235,7 @@ class CApp {
 								color: 0xff0000,
 								description: ex,
 								author: {
-									name: discord_client.user.username,
+									name: guilds.main.member(discord_client.user.id).displayName,
 									icon_url: discord_client.user.avatarURL,
 									url: config.site
 								},
@@ -247,7 +306,7 @@ class CApp {
 					color: 0xff0000,
 					description: `${error}`,
 					author: {
-						name: discord_client.user.username,
+						name: guilds.main.member(discord_client.user.id).displayName,
 						icon_url: discord_client.user.avatarURL,
 						url: config.site
 					},
@@ -262,7 +321,7 @@ class CApp {
 					color: 0x00ff00,
 					description: `App listening at http://${addr.address}:${addr.port}`,
 					author: {
-						name: discord_client.user.username,
+						name: guilds.main.member(discord_client.user.id).displayName,
 						icon_url: discord_client.user.avatarURL,
 						url: config.site
 					},
@@ -274,7 +333,7 @@ class CApp {
 				color: 0x00ff00,
 				description: `Logged in as ${discord_client.user.tag}!`,
 				author: {
-					name: discord_client.user.username,
+					name: guilds.main.member(discord_client.user.id).displayName,
 					icon_url: discord_client.user.avatarURL,
 					url: config.site
 				},
