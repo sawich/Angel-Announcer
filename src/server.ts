@@ -45,7 +45,6 @@ import * as body_parser from 'body-parser'
 import * as express from 'express'
 import { Request, Response, Express } from 'express'
 
-import { post } from 'request-promise-native'
 import { AddressInfo } from 'net';
 import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
 import { Server } from 'http';
