@@ -45,13 +45,16 @@ import * as body_parser from 'body-parser'
 import * as express from 'express'
 import { Request, Response, Express } from 'express'
 
-import { Server } from 'http'
+import { post } from 'request-promise-native'
 import { AddressInfo } from 'net';
 import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
-
+import { Server } from 'http';
+import { BitlyClient } from 'bitly/dist/bitly.js';
 
 class CApp {
 	constructor() {
+		const bitly = new BitlyClient(process.env.BITLY_TOKEN, {});
+		
 		new Promise(async () => {
 			const database = new CDataBase()
 			const database_load = database.load()
@@ -72,7 +75,7 @@ class CApp {
 			process.on('uncaughtException', (ex) => {
 				channels.log.send({ embed: {
 					color: 0xff0000,
-					title: `${ex.message}`,
+					title: `${ex.message}`,	
 					description: `\`\`\`${ex.stack}\`\`\``,
 					author: {
 						name: guilds.main.member(discord_client.user.id).displayName,
@@ -154,8 +157,27 @@ class CApp {
 
 			//
 			const commands = new CCommands(new Map <string, Function> ([
-			// CUserManagement
 
+				[ 'links', async (message: Message, args: string[]) => {	
+					if(args.length < 1) { return }
+
+					const links = args.map((url: string) => bitly.shorten(url))					
+					const response = await Promise.all(links)				
+
+					message.reply({ embed: {
+						color: 0x00bfff,
+						author: {
+							name: 'Ссылки',
+							icon_url: discord_client.user.avatarURL,
+							url: config.site
+						},
+						fields: response.map(link => ({
+							name: (new URL(link['long_url'])).hostname,
+							value: link['url']
+						}))
+					}})
+				}],
+			// CUserManagement
 				[ 'maidens', async (message: Message, args: string[]) : Promise <void> => {
 					if (!args) { return }
 
