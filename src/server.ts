@@ -69,6 +69,23 @@ class CApp {
 			const guilds   = new CGuilds(discord_client)
 			const channels = new CChannels(guilds)
 
+			process.on('uncaughtException', (ex) => {
+				channels.log.send({ embed: {
+					color: 0xff0000,
+					title: `uncaughtException: ${ex.message}`,
+					description: `\`\`\`${ex.stack}\`\`\``,
+					author: {
+						name: discord_client.user.username,
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					timestamp: new Date
+				}}).catch(console.error)
+
+				console.error((new Date).toUTCString() + ' uncaughtException:', ex.message)
+				console.error(ex.stack)
+			})
+
 			await database_load
 
 			const maiden_management        = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
@@ -100,8 +117,8 @@ class CApp {
 									url: config.site
 								},
 								fields: result.list.map((angel_maiden) => {
-									const find = message.guild.members.get(angel_maiden.discordid)
-									return { name: angel_maiden.nick, value:(find ? `*${find}*` : '*—*'), inline: true }
+									const find = message.guild.members.get(angel_maiden['id'])
+									return { name: angel_maiden['nick'], value:(find ? `*${find}*` : '*—*'), inline: true }
 								})
 							}})
 						} catch {

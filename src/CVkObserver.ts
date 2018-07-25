@@ -49,13 +49,13 @@ export class CVkObserver {
     let chapter_workers = []
     while (null != (angel_info = angelmaiden_name.exec (angelmaidens))) {
       let display_user = null
-      const angelmaiden = this._database.maidens.findOne({ nick: angel_info[1].toLowerCase () })
+      const angelmaiden = await this._database.maidens.findOne({ nick: angel_info[1].toLowerCase () })
       if (angelmaiden) {
-        display_user = this._guilds.main.members.get (angelmaiden.discordid)
+        display_user = this._guilds.main.members.get (angelmaiden['id'])
       }
 
       chapter_workers.push (display_user || angel_info[1])
-  }
+    }
 
     // readers link replace to discord-like link
     const link_info_regexp = /#(\S+):.*?(http\S+)/gi
