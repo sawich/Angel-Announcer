@@ -28,6 +28,15 @@ type dajiaochongmanhua_t = {
     cdn: string
   },
 }
+
+type image_list_item_t = {
+  imgid: number,
+  image: string,
+  url: string
+};
+
+type image_list_t = Array <image_list_item_t>;
+
 /// lily (1378)
 export class CGrabberDajiaochongmanhua implements IGrabber {
   private _comic_id: number
@@ -52,15 +61,6 @@ export class CGrabberDajiaochongmanhua implements IGrabber {
     const IMAGE_LIST_URL_regexp = new RegExp(/var IMAGE_LIST_URL = (.*?);/)
     const script = Array.from(manhwa_page_dom.window.document.querySelectorAll('script')).find(value => IMAGE_LIST_URL_regexp.test(value.textContent))
     if(!script) { return }
-
-
-    type image_list_item_t = {
-      imgid: number,
-      image: string,
-      url: string
-    };
-
-    type image_list_t = Array <image_list_item_t>;
 
     const parsed = JSON.parse(script.textContent.match(IMAGE_LIST_URL_regexp)[1]) as image_list_t
 
