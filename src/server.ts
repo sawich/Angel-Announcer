@@ -352,9 +352,9 @@ class CApp {
 				process.env.IP || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0'
 			)
 
-			server.on('error', error => {
+			server.on('error', async (error) => {
 				console.error(error)
-				channels.log.send({ embed: {
+				await channels.log.send({ embed: {
 					color: 0xff0000,
 					description: `${error}`,
 					author: {
@@ -366,7 +366,7 @@ class CApp {
 				process.exit(1)
 			})
 
-			server.once('listening', () => {
+			/*server.once('listening', () => {
 				const addr = server.address() as AddressInfo;
 
 				channels.log.send({ embed: {
@@ -378,7 +378,7 @@ class CApp {
 						url: config.site
 					},
 				}})
-			})
+			})*/
 
 			//
 			/*channels.log.send({ embed: {

@@ -50,46 +50,46 @@ export class CGrabberDajiaochongmanhua implements IGrabber {
     const manhwa_page_dom = new JSDOM(manhwa_page.data)
     
     const IMAGE_LIST_URL_regexp = new RegExp(/var IMAGE_LIST_URL = (.*?);/)
-    for(const script of Array.from(manhwa_page_dom.window.document.querySelectorAll('script'))) {
-      if(IMAGE_LIST_URL_regexp.test(script.textContent)) {
-        type image_list_item_t = {
-          imgid: number,
-          image: string,
-          url: string
-        };
-  
-        type image_list_t = Array <image_list_item_t>;
-  
-        const parsed = JSON.parse(script.textContent.match(IMAGE_LIST_URL_regexp)[1]) as image_list_t
-  
-        const path = `lily_${v4()}.zip`
-        const output = createWriteStream(path);
-        const archive = create('zip', { zlib: { level: 9 } } )
-        const wait = new Promise((write_complete) => output.on('close', () => {
-          write_complete()
-        }))
-  
-        archive.pipe(output)
-  
-        await Promise.all(
-          parsed.map(async (data, index) => {  
-            const image = await axios.get <Readable> (data.url, { responseType: 'stream' })
-            archive.append(image.data, { name: `${index + 1}.jpg` })
-          })
-        )
-  
-        archive.finalize()
-  
-        await wait
-        return { 
-          thumb: thumb_dom.window.document.querySelector('.book-thumb').getAttribute('src'),
-          link: manhwa_page.config.url,
-          descripion: 'В этой манхве есть экстра главы, из-за чего на сайте нумерация сибита!', 
-          name: response.data.data[item].name,
-          title: thumb_dom.window.document.querySelector('.book-name').textContent,
-          path
-        }
-      }
+    const script = Array.from(manhwa_page_dom.window.document.querySelectorAll('script')).find(value => IMAGE_LIST_URL_regexp.test(value.textContent))
+    if(!script) { return }
+
+
+    type image_list_item_t = {
+      imgid: number,
+      image: string,
+      url: string
+    };
+
+    type image_list_t = Array <image_list_item_t>;
+
+    const parsed = JSON.parse(script.textContent.match(IMAGE_LIST_URL_regexp)[1]) as image_list_t
+
+    const path = `lily_${v4()}.zip`
+    const output = createWriteStream(path);
+    const archive = create('zip', { zlib: { level: 9 } } )
+    const wait = new Promise((write_complete) => output.on('close', () => {
+      write_complete()
+    }))
+
+    archive.pipe(output)
+
+    await Promise.all(
+      parsed.map(async (data, index) => {  
+        const image = await axios.get <Readable> (data.url, { responseType: 'stream' })
+        archive.append(image.data, { name: `${index + 1}.jpg` })
+      })
+    )
+
+    archive.finalize()
+
+    await wait
+    return { 
+      thumb: thumb_dom.window.document.querySelector('.book-thumb').getAttribute('src'),
+      link: manhwa_page.config.url,
+      descripion: 'В этой манхве есть экстра главы, из-за чего на сайте нумерация сибита!', 
+      name: response.data.data[item].name,
+      title: thumb_dom.window.document.querySelector('.book-name').textContent,
+      path
     }
   }
 }
