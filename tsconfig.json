@@ -4,6 +4,7 @@
     "module": "commonjs",
     "alwaysStrict": true,
     "target": "esnext",
+    "lib": [ "esnext", "dom" ],
     "outDir": "./build/",
     "rootDir": "./src/",
     "moduleResolution": "node",

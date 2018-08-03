@@ -39,7 +39,7 @@ import { CMediaPlayer } from './CMediaPlayer';
 // import { CManga } from './CManga'
 // import { CMediaPlayer from './CMediaPlayer'
 
-import { Permissions, Message, Client, GuildMember, RichEmbed } from 'discord.js'
+import { Permissions, Message, Client, GuildMember, RichEmbed, TextChannel, FileOptions } from 'discord.js'
 import * as body_parser from 'body-parser'
 
 import * as express from 'express'
@@ -49,6 +49,9 @@ import { AddressInfo } from 'net';
 import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
 import { Server } from 'http';
 import { BitlyClient } from 'bitly/dist/bitly.js';
+import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua.js';
+import { IGrabber } from './IGrabber.js';
+import { unlinkSync } from 'fs';
 
 class CApp {
 	constructor() {
@@ -60,6 +63,8 @@ class CApp {
 
 			const discord_client: Client = new Client
 			
+			discord_client.on('error', (ex) => console.error)
+
 			try {
 				await discord_client.login(process.env.DISCORD_TOKEN)
 			} catch(ex) {
@@ -67,6 +72,10 @@ class CApp {
 				process.exit(1)
 			}
 			
+			const grabbers = new Map <string, IGrabber> ([[
+				'lily', new CGrabberDajiaochongmanhua(1378)
+			]])
+
 			//
 			const guilds   = new CGuilds(discord_client)
 			const channels = new CChannels(guilds)
@@ -104,7 +113,7 @@ class CApp {
 					fields: angelmaidens.slice(0, 25).map((maiden) => ({ name: maiden.id, value: `${maiden}`, inline: true }))
 				}})
 			})
-
+			
 			maiden_management.once('maintenance_remove',  async (angelmaidens: CMaidenManagementItem[]) => {
 				channels.log.send({ embed: {
 					color: 0xffff00,
@@ -157,11 +166,33 @@ class CApp {
 			//
 			const commands = new CCommands(new Map <string, Function> ([
 
+				[ 'grab', async (message: Message, args: string[]) => {
+					if(args.length < 2) { return }
+
+					const grabber = await grabbers.get(args.shift())
+					if(!grabber) { return }
+
+					const grabbed = await grabber.grab(parseInt(args.shift()))
+		
+					const embed = new RichEmbed()
+						.setColor(0xffff00)
+						.setDescription(grabbed.descripion)
+						.setAuthor(`${grabbed.title} (${grabbed.name})`, discord_client.user.avatarURL, grabbed.link)
+						.setThumbnail(grabbed.thumb)
+				
+					const file: FileOptions = {    
+						attachment: grabbed.path,
+						name: `Lily ${grabbed.name}.zip`
+					}
+				
+					await message.reply({ embed, file })
+					unlinkSync(grabbed.path)
+				}],
+
 				[ 'links', async (message: Message, args: string[]) => {	
 					if(args.length < 1) { return }
-
-					const links = args.map((url: string) => bitly.shorten(url))					
-					const response = await Promise.all(links)				
+		
+					const response = await Promise.all(args.map((url: string) => bitly.shorten(url))	)				
 
 					message.reply({ embed: {
 						color: 0x00bfff,
@@ -350,7 +381,7 @@ class CApp {
 			})
 
 			//
-			channels.log.send({ embed: {
+			/*channels.log.send({ embed: {
 				color: 0x00ff00,
 				description: `Logged in as ${discord_client.user.tag}!`,
 				author: {
@@ -358,7 +389,7 @@ class CApp {
 					icon_url: discord_client.user.avatarURL,
 					url: config.site
 				},
-			}})
+			}})*/
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})
