@@ -46,10 +46,10 @@ export class CGrabberDajiaochongmanhua implements IGrabber {
   }
 
   public async grab(chapter_id: number) : Promise <grabber_t> {
-    const need_ch         : number = (chapter_id - 1)
-    const per_page        : number = 12
-    const page            : number = 1 + (need_ch / per_page)
-    const item            : number = (need_ch % per_page)
+    const need_ch  : number = (chapter_id - 1)
+    const per_page : number = 12
+    const page     : number = 1 + (need_ch / per_page)
+    const item     : number = (need_ch % per_page)
     
     const thumb_promise = (await axios.get(`https://www.dajiaochongmanhua.com/comic/${this._comic_id}`)).data
     const thumb_dom = new JSDOM(thumb_promise)

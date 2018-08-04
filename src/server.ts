@@ -179,13 +179,12 @@ class CApp {
 						.setDescription(grabbed.descripion)
 						.setAuthor(`${grabbed.title} (${grabbed.name})`, discord_client.user.avatarURL, grabbed.link)
 						.setThumbnail(grabbed.thumb)
+						.attachFile({    
+							attachment: grabbed.path,
+							name: `Lily ${grabbed.name}.zip`
+						})
 				
-					const file: FileOptions = {    
-						attachment: grabbed.path,
-						name: `Lily ${grabbed.name}.zip`
-					}
-				
-					await message.reply({ embed, file })
+					await message.reply({ embed })
 					unlinkSync(grabbed.path)
 				}],
 
