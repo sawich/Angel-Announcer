@@ -52,6 +52,8 @@ import { BitlyClient } from 'bitly/dist/bitly.js';
 import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua.js';
 import { IGrabber } from './IGrabber.js';
 import { unlinkSync } from 'fs';
+import { ICommentNoticer, CommentNoticerList_t } from './ICommentNoticer.js';
+import { CCommentNoticerMangachan } from './CCommentNoticerMangachan.js';
 
 class CApp {
 	constructor() {
@@ -389,6 +391,34 @@ class CApp {
 					url: config.site
 				},
 			}})*/
+
+			const yoba = discord_client.emojis.get('430424310050717696')
+
+			const noticers: Array <ICommentNoticer> = [
+				new CCommentNoticerMangachan(yoba, database.comments)
+			]
+			const comment_noticer_update = async () => {
+				setTimeout(async () => {
+					for(const noticer of noticers) {
+						await noticer.update(async (list: CommentNoticerList_t) => {
+							for (const comment of list.comments.reverse()) {
+								const embed = new RichEmbed()
+									.setAuthor(`${list.service.manga_title}`, list.service.icon, list.service.manga_url)
+									.setThumbnail(comment.avatar)
+									.setTitle(comment.author)
+									.setURL(comment.author_link)
+									.setDescription(comment.message)
+									.setFooter(comment.datetime)
+								await channels.comments.send({ embed })
+							}
+						})
+					}
+
+					await comment_noticer_update();
+				}, 1000 * 60 * 5);
+			}
+			
+			comment_noticer_update()
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})

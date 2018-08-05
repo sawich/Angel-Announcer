@@ -6,6 +6,7 @@ export default Object.freeze({
 	channelid: {
 		log: '407422277144018954',
 		test: '407454794056204290',
+		comments: '475489616888201216',
 		announcement: '407369776625614848'
 	},
 	roles: {

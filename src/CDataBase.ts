@@ -11,14 +11,45 @@ const CDataBaseMaidenModelSchema = new Schema({
 		unique: true,
 		required: true
 	}
-}, { 
-	timestamps: false, 
+}, {
+	timestamps: false,
 	collection: 'angelmaidens'
- })
+})
+
+//
+//
+//
+
+interface IDataBaseLastMangaCommentId {
+  service: string
+  value: number
+}
+
+export interface IDataBaseLastMangaCommentIdModel extends IDataBaseLastMangaCommentId, Document {}
+
+const CDataBaseLastMangaCommentIdSchema: Schema = new Schema({
+	service: {
+		type: String,
+    unique: true,
+    required: true
+	},
+	value: {
+		type: Number,
+    unique: true,
+    default: 0
+	}
+}, {
+	timestamps: false,
+	collection: 'lastmangacommentid'
+})
+
+//
+//
+//
 
 export class CDataBase {
-
 	private _maidens: Model <Document>
+	private _comments: Model <IDataBaseLastMangaCommentIdModel>
 
 	/**
 	 * load
@@ -34,8 +65,9 @@ export class CDataBase {
 
 	constructor() {
 		this._maidens = model('CDataBaseMaidenModel', CDataBaseMaidenModelSchema)
+		this._comments = model('CDataBaseLastMangaCommentId', CDataBaseLastMangaCommentIdSchema)
 	}
 
 	get maidens() { return this._maidens }
-
+	get comments() { return this._comments }
 }

@@ -7,6 +7,7 @@ export class CChannels {
 
 	private _log: TextChannel
 	private _test: TextChannel
+	private _comments: TextChannel
 	private _announcement: TextChannel
 		
 	constructor(guilds: CGuilds) {
@@ -22,6 +23,12 @@ export class CChannels {
 			process.exit(1)
 		}
 		
+		this._comments = guilds.main.channels.get (config.channelid.comments) as TextChannel
+		if (!this._comments) {
+			console.log (`channels.comments [id:${config.channelid.comments}] not found`)
+			process.exit(1)
+		}
+		
 		this._announcement = guilds.main.channels.get (config.channelid.announcement) as TextChannel
 		if (!this._announcement) {
 			console.log (`channels.announcement [id:${config.channelid.announcement}] not found`)
@@ -34,6 +41,9 @@ export class CChannels {
 
 	// channel for deve test's
 	public get test(): TextChannel { return this._test }
+
+	// канал с комментариями к релизам с читалок
+	public get comments(): TextChannel { return this._comments }
 
 	// channel for announcement manga
 	public get announcement(): TextChannel { return this._announcement }
