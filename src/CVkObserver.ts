@@ -24,6 +24,19 @@ export type group_join = {
   group_id: number
 }
 
+interface vk_user_get_t {
+  id: number
+  first_name: string
+  last_name: string
+  deactivated?: string
+}
+
+interface vk_user_get_group_user_t extends vk_user_get_t {
+  photo_50: string
+}
+
+// photo_50
+
 export class CVkObserver {
   
   _database: CDataBase
@@ -100,26 +113,27 @@ export class CVkObserver {
     }})
   }
 
-  private _group_user_lj_post = (body, msg: string = 'Подписочка', color: number = 0x00bfff) => {
-    axios.get (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`)
-    .then (async (res) => {
-      for (const response of res.data.response) {  
-                
-        await this._channels.log.send ({ embed: {
-          color,
-          description: `${msg} от [${response.first_name} ${response.last_name}](https://vk.com/id${response.id})`,
-          author: {
-            name: this._bot.user.username,
-            icon_url: this._bot.user.avatarURL,
-            url: config.site
-          },
-          thumbnail: {
-            url: response.photo_50
-          },
-          timestamp: new Date
-        }})
-      }
-    }).catch (console.log)
+  private async _group_user_lj_post(body, msg: string = 'Подписочка', color: number = 0x00bfff) {
+    const response_raw = await axios.get (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`)
+    if(response_raw['error']) {
+      throw response_raw
+    }
+
+    for(const data of response_raw['response'] as Array <vk_user_get_group_user_t>) {
+      this._channels.log.send ({ embed: {
+        color,
+        description: `${msg} от [${data.first_name} ${data.last_name}](https://vk.com/id${data.id})`,
+        author: {
+          name: this._bot.user.username,
+          icon_url: this._bot.user.avatarURL,
+          url: config.site
+        },
+        thumbnail: {
+          url: data.photo_50
+        },
+        timestamp: new Date
+      }})
+    }
   }
 
   async group_leave(body: group_leave) {
