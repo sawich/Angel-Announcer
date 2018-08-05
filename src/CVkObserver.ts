@@ -35,8 +35,6 @@ interface vk_user_get_group_user_t extends vk_user_get_t {
   photo_50: string
 }
 
-// photo_50
-
 export class CVkObserver {
   
   _database: CDataBase
@@ -118,6 +116,8 @@ export class CVkObserver {
     if(response_raw['error']) {
       throw response_raw
     }
+
+    console.log(response_raw['response'])
 
     for(const data of response_raw['response'] as Array <vk_user_get_group_user_t>) {
       this._channels.log.send ({ embed: {
