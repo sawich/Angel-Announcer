@@ -112,12 +112,10 @@ export class CVkObserver {
   }
 
   private async _group_user_lj_post(body, msg: string = 'Подписочка', color: number = 0x00bfff) {
-    const response_raw = await axios.get (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`)
+    const response_raw = (await axios.get (`https://api.vk.com/method/users.get?access_token=${process.env.VK_TOKEN}&user_ids=${body.user_id}&fields=photo_50&lang=0&v=5.73`)).data
     if(response_raw['error']) {
       throw response_raw
     }
-
-    console.log(response_raw['response'])
 
     for(const data of response_raw['response'] as Array <vk_user_get_group_user_t>) {
       this._channels.log.send ({ embed: {
