@@ -397,7 +397,7 @@ class CApp {
 			const cn_mc = new CCommentNoticerMangaChan(yoba, database.comments)
 			const cn_rm = new CCommentNoticerReadManga(database.comments)
 
-			const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
+			//const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
 			
 			const comment_noticer_update = async () => {
 				setTimeout(async () => {
