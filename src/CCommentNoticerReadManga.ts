@@ -84,6 +84,7 @@ export class CCommentNoticerReadManga {
             page_id,
             comments: []
           }
+          
           for(const comment of Array.from(comments.children)) {            
             const [ , author_link, author, message, message_id, datetime ] = html_decode.decode(comment.innerHTML).match(parser_comment)
               
@@ -97,7 +98,10 @@ export class CCommentNoticerReadManga {
               author_link, author, message, datetime
             })
           }
-          data.pages.push(current)
+
+          if(current.comments.length) {
+            data.pages.push(current)
+          }
         }
 
         if(data.pages.length) {
