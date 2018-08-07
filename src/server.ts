@@ -52,7 +52,7 @@ import { BitlyClient } from 'bitly/dist/bitly';
 import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua';
 import { IGrabber } from './IGrabber';
 import { unlinkSync } from 'fs';
-import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangachan';
+import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangaChan';
 import { CCommentNoticerReadManga, CommentNoticerReadManga_t } from "./CCommentNoticerReadManga";
 
 class CApp {
@@ -431,8 +431,6 @@ class CApp {
 								const current_page = `***[#](${page.url})***`
 								
 								const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\▼').replace(/_{2,}/g, '○')}\n`)
-								if(!page_fields.length) { continue }
-
 								const current_page_title = `— стр. ${1 + page.page_id} —`
 								const embed_default_size = data.name.length + current_page_title.length
 					

@@ -99,8 +99,10 @@ export class CCommentNoticerReadManga {
           }
           data.pages.push(current)
         }
-  
-        await callback(data)
+
+        if(data.pages.length) {
+          await callback(data)
+        }
       }
     }
 
