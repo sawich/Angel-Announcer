@@ -493,7 +493,7 @@ class CApp {
 					])
 					
 					await comment_noticer_update()
-				}, 1000 * 60 * 5)
+				}, 1000/* * 60 * 5*/)
 			}
 			
 			comment_noticer_update()
