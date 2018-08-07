@@ -35,7 +35,6 @@ const CDataBaseLastMangaCommentIdSchema: Schema = new Schema({
 	},
 	value: {
 		type: Number,
-    unique: true,
     default: 0
 	}
 }, {

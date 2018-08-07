@@ -418,7 +418,7 @@ class CApp {
 						cn_rm.update(async (data: CommentNoticerReadManga_t) => {
 							const embed = new RichEmbed()
 								.setColor(0xedd644)
-								.setAuthor(data.name, 'http://res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png', data.url)
+								.setAuthor(data.name, data.icon, data.url)
 					
 							type embed_t = { name: string, value: string };
 					
