@@ -8,7 +8,7 @@ export default Object.freeze({
 		test: '407454794056204290',
 		comments: {
 			mangachan: '475489616888201216',
-			readmanga: '476189069068468225'
+			readmanga: '476390702196981761'
 		},
 		announcement: '407369776625614848'
 	},
