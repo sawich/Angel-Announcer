@@ -52,7 +52,7 @@ import { BitlyClient } from 'bitly/dist/bitly';
 import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua';
 import { IGrabber } from './IGrabber';
 import { unlinkSync } from 'fs';
-import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangaChan';
+import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangachan';
 import { CCommentNoticerReadManga, CommentNoticerReadManga_t } from "./CCommentNoticerReadManga";
 
 class CApp {

@@ -20,7 +20,7 @@ export type CommentNoticerMangaChanComment_t = {
   comment_link: string
   author_link: string
 }
-
+//
 export type CommentNoticerMangaChanList_t = {
   service: CommentNoticerMangaChanService_t
   comments: Array <CommentNoticerMangaChanComment_t>
