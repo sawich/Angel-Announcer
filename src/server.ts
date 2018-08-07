@@ -29,7 +29,7 @@
 
 import config from './config/config.js'
 
-import { CMaidenManagement, CMaidenManagementList, CMaidenManagementItem } from './CMaidenManagement.js'
+import { CMaidenManagement, CMaidenManagementList, CMaidenManagementItem } from './CMaidenManagement'
 import { CVkObserver, group_leave, group_join } from './CVkObserver'
 import { CChannels } from './CChannels'
 import { CCommands } from './CCommands'
@@ -46,13 +46,13 @@ import * as express from 'express'
 import { Request, Response, Express } from 'express'
 
 import { AddressInfo } from 'net';
-import { CUserPlaylistManagement } from './CUserPlaylistManagement.js';
+import { CUserPlaylistManagement } from './CUserPlaylistManagement';
 import { Server } from 'http';
-import { BitlyClient } from 'bitly/dist/bitly.js';
-import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua.js';
-import { IGrabber } from './IGrabber.js';
+import { BitlyClient } from 'bitly/dist/bitly';
+import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua';
+import { IGrabber } from './IGrabber';
 import { unlinkSync } from 'fs';
-import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangaChan.js';
+import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangaChan';
 import { CCommentNoticerReadManga, CommentNoticerReadManga_t } from "./CCommentNoticerReadManga";
 
 class CApp {
