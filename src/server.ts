@@ -52,7 +52,7 @@ import { BitlyClient } from 'bitly/dist/bitly';
 import { CGrabberDajiaochongmanhua } from './CGrabberDajiaochongmanhua';
 import { IGrabber } from './IGrabber';
 import { unlinkSync } from 'fs';
-import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangaChan';
+import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangachan';
 import { CCommentNoticerReadManga, CommentNoticerReadManga_t } from "./CCommentNoticerReadManga";
 
 class CApp {
@@ -411,12 +411,13 @@ class CApp {
 									.setURL(comment.author_link)
 									.setDescription(comment.message)
 									.setFooter(comment.datetime)
+									.setColor(0x3baaef)
 								await channels.comments_mangachan.send({ embed })
 							}
 						}), 
 						cn_rm.update(async (data: CommentNoticerReadManga_t) => {
 							const embed = new RichEmbed()
-								.setColor(15861924)
+								.setColor(0xedd644)
 								.setAuthor(data.name, 'http://res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png', data.url)
 					
 							type embed_t = { name: string, value: string };
