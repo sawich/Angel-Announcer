@@ -1,4 +1,3 @@
-import { ICommentNoticer, CommentNoticerList_t } from "./ICommentNoticer";
 import { Emoji } from "discord.js";
 import { Model } from "mongoose";
 import { JSDOM } from "jsdom";
@@ -6,7 +5,28 @@ import { CHtmlDecoder } from "./CHtmlDecoder";
 import { IDataBaseLastMangaCommentIdModel } from "./CDataBase";
 import axios from "axios";
 
-export class CCommentNoticerMangachan implements ICommentNoticer {
+export type CommentNoticerMangaChanService_t = {
+  link: string
+  icon: string
+  manga_title: string
+  manga_url: string
+}
+
+export type CommentNoticerMangaChanComment_t = {
+  datetime: string
+  author: string
+  avatar: string
+  message: string
+  comment_link: string
+  author_link: string
+}
+
+export type CommentNoticerMangaChanList_t = {
+  service: CommentNoticerMangaChanService_t
+  comments: Array <CommentNoticerMangaChanComment_t>
+}
+
+export class CCommentNoticerMangaChan {
   private _yoba: Emoji
   private _url = 'http://mangachan.me'
   private _favicon = 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png'
@@ -17,7 +37,7 @@ export class CCommentNoticerMangachan implements ICommentNoticer {
     this._db_comments = db_comments
   }
 
-  public async update(callback: (list: CommentNoticerList_t) => Promise <void>) : Promise <void> {
+  public async update(callback: (list: CommentNoticerMangaChanList_t) => Promise <void>) : Promise <void> {
     const db_model = await this._db_comments.findOne({
       service: 'mangachan'
     }) || await this._db_comments.create({
@@ -31,7 +51,7 @@ export class CCommentNoticerMangachan implements ICommentNoticer {
 
     let last_comment_id = db_model.value
     for (const translater of Array.from(translater_page_dom.window.document.querySelectorAll('.title_link'))) {
-      const list: CommentNoticerList_t = {
+      const list: CommentNoticerMangaChanList_t = {
         service: {
           link: this._url,
           icon: this._favicon,
@@ -82,8 +102,9 @@ export class CCommentNoticerMangachan implements ICommentNoticer {
         }
       }
 
-      await callback(list)
+      callback(list)
     }
+    
     db_model.value = last_comment_id
     await db_model.save()
   }

@@ -9,6 +9,7 @@
     "rootDir": "./src/",
     "moduleResolution": "node",
     "allowJs": false,
+    "allowSyntheticDefaultImports": true,
     "types":[
       "node"
     ]

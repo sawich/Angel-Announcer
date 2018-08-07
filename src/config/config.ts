@@ -6,7 +6,10 @@ export default Object.freeze({
 	channelid: {
 		log: '407422277144018954',
 		test: '407454794056204290',
-		comments: '475489616888201216',
+		comments: {
+			mangachan: '475489616888201216',
+			readmanga: '476189069068468225'
+		},
 		announcement: '407369776625614848'
 	},
 	roles: {

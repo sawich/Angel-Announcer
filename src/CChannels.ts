@@ -7,7 +7,8 @@ export class CChannels {
 
 	private _log: TextChannel
 	private _test: TextChannel
-	private _comments: TextChannel
+	private _comments_mangachan: TextChannel
+	private _comments_readmanga: TextChannel
 	private _announcement: TextChannel
 		
 	constructor(guilds: CGuilds) {
@@ -23,9 +24,15 @@ export class CChannels {
 			process.exit(1)
 		}
 		
-		this._comments = guilds.main.channels.get (config.channelid.comments) as TextChannel
-		if (!this._comments) {
-			console.log (`channels.comments [id:${config.channelid.comments}] not found`)
+		this._comments_mangachan = guilds.main.channels.get (config.channelid.comments.mangachan) as TextChannel
+		if (!this._comments_mangachan) {
+			console.log (`channels.comments.mangachan [id:${config.channelid.comments.mangachan}] not found`)
+			process.exit(1)
+		}
+		
+		this._comments_readmanga = guilds.main.channels.get (config.channelid.comments.readmanga) as TextChannel
+		if (!this._comments_readmanga) {
+			console.log (`channels.comments.readmanga [id:${config.channelid.comments.readmanga}] not found`)
 			process.exit(1)
 		}
 		
@@ -43,7 +50,10 @@ export class CChannels {
 	public get test(): TextChannel { return this._test }
 
 	// канал с комментариями к релизам с читалок
-	public get comments(): TextChannel { return this._comments }
+	public get comments_mangachan(): TextChannel { return this._comments_mangachan }
+
+	// канал с комментариями к релизам с читалок
+	public get comments_readmanga(): TextChannel { return this._comments_readmanga }
 
 	// channel for announcement manga
 	public get announcement(): TextChannel { return this._announcement }

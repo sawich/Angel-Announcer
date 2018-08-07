@@ -18,6 +18,7 @@
     "@types/uuid": "^3.4.3",
     "archiver": "^2.1.1",
     "axios": "^0.18.0",
+    "axios-extensions": "^3.0.3",
     "bitly": "^6.0.8",
     "cheerio": "^1.0.0-rc.2",
     "discord.js": "^11.3.0",
