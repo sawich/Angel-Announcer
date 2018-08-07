@@ -41,7 +41,8 @@ export class CCommentNoticerMangaChan {
     const db_model = await this._db_comments.findOne({
       service: 'mangachan'
     }) || await this._db_comments.create({
-      service: 'mangachan'
+      service: 'mangachan',
+      value: 0
     })
 
     const translater_page = await axios.get('http://mangachan.me/translation/70489/')

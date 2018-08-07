@@ -46,7 +46,8 @@ export class CCommentNoticerReadManga {
     const db_model = await this._db_comments.findOne({
       service: 'readmanga'
     }) || await this._db_comments.create({
-      service: 'readmanga'
+      service: 'readmanga',
+      value: 0
     })    
     let last_comment_id = db_model.value
 
@@ -84,7 +85,7 @@ export class CCommentNoticerReadManga {
             page_id,
             comments: []
           }
-          
+
           for(const comment of Array.from(comments.children)) {            
             const [ , author_link, author, message, message_id, datetime ] = html_decode.decode(comment.innerHTML).match(parser_comment)
               
