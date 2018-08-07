@@ -429,7 +429,7 @@ class CApp {
 							
 							for(const page of data.pages) {
 								const current_page = `***[#](${page.url})***`
-								const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\◘')}\n`)
+								const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\▼').replace(/_{2,}/g, '○')}\n`)
 								const current_page_title = `— стр. ${1 + page.page_id} —`
 								const embed_default_size = data.name.length + current_page_title.length
 					

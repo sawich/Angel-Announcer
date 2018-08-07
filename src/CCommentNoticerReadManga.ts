@@ -57,7 +57,7 @@ export class CCommentNoticerReadManga {
     const html_decode = new CHtmlDecoder(translater_page_dom.window.document.createElement('textarea'))
   
     for (const translater of Array.from(translater_page_dom.window.document.querySelectorAll('h3 a'))) {
-      console.log(`[ ${translater.getAttribute("title")} ]`)
+      //console.log(`[ ${translater.getAttribute("title")} ]`)
   
       const list_of_managa_page = await readmanga.get(`http://readmanga.me${translater.getAttribute("href")}`)
       const list_of_managa_page_dom = new JSDOM(list_of_managa_page.data)
