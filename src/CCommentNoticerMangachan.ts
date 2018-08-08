@@ -46,6 +46,8 @@ export class CCommentNoticerMangaChan {
     })
 
     const translater_page = await axios.get('http://mangachan.me/translation/70489/')
+    // console.log(`[${translater_page.status}] [${translater_page.config.url}]`)
+
     const translater_page_dom = new JSDOM(translater_page.data)
 
     const html_decoder = new CHtmlDecoder(translater_page_dom.window.document.createElement('textarea'))
@@ -66,6 +68,8 @@ export class CCommentNoticerMangaChan {
 
       for(let page = 1, done = 0; done != 1; ++page) {
         const manga_page = await axios.get(`${this._url}/manga/page,1,${page},${last_part_url}`)
+        console.log(`[${translater_page.status}] [${manga_page.config.url}]`)
+
         const manga_page_dom = new JSDOM(manga_page.data)
 
         const raw_comments = Array.from(manga_page_dom.window.document.querySelectorAll('[id^=comment-id-]'))
@@ -75,7 +79,6 @@ export class CCommentNoticerMangaChan {
           const message_id = parseInt(comment.id.match(/comment-id-(\d+)/s)[1])
           if(message_id <= db_model.value) {
             done = 1
-            console.log('ma отработал')
             break
           }
           last_comment_id = Math.max(last_comment_id, message_id)

@@ -6,12 +6,12 @@ import { Model } from 'mongoose';
 import { IDataBaseLastMangaCommentIdModel } from './CDataBase';
 import { JSDOM } from 'jsdom';
 import { CHtmlDecoder } from './CHtmlDecoder';
-
+/*
 const readmanga = axios.create({
   baseURL: 'http://readmanga.me',
   headers: { 'Cache-Control': 'no-cache' },
   adapter: throttleAdapterEnhancer(axios.defaults.adapter, { threshold: 1 * 10000 })
-})
+})*/
 
 export type CommentNoticerReadMangaComment_t = {
   author_link: string
@@ -37,17 +37,24 @@ export class CCommentNoticerReadManga {
 
   private _favicon = 'https://images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png'
   private _db_comments: Model <IDataBaseLastMangaCommentIdModel>
+  private _last_request: Promise <void>
   
   constructor(db_comments: Model <IDataBaseLastMangaCommentIdModel>) {
     this._db_comments = db_comments
+    this._last_request = new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
   private async _error_handler(url: string) {
     while(true) {
-      try {        
-        return await readmanga.get(url)
+      try {      
+        await this._last_request
+        const response = await axios.get(url)
+        // console.log(`[${response.status}] [${response.config.url}]`)
+        this._last_request = new Promise((resolve) => setTimeout(resolve, 3000))
+        return response
       } catch {
-        await new Promise((resolve) => setTimeout(resolve, 10000))
+        console.log('wait')
+        this._last_request = new Promise((resolve) => setTimeout(resolve, 10000)) 
       }
     }
   }
