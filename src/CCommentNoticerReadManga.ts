@@ -43,6 +43,7 @@ export class CCommentNoticerReadManga {
   }
 
   public async update(callback?: (data: CommentNoticerReadManga_t) => Promise <void>) : Promise <void> {
+    try {
     const db_model = await this._db_comments.findOne({
       service: 'readmanga'
     }) || await this._db_comments.create({
@@ -113,5 +114,9 @@ export class CCommentNoticerReadManga {
 
     db_model.value = last_comment_id
     await db_model.save()
+    }
+    catch(ex) {
+      console.trace(ex) 
+    }
   }
 }
