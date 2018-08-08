@@ -1,6 +1,6 @@
 
 
-import axios from 'axios'
+import axios, { AxiosPromise, AxiosResponse, AxiosError } from 'axios'
 import { throttleAdapterEnhancer } from 'axios-extensions';
 import { Model } from 'mongoose';
 import { IDataBaseLastMangaCommentIdModel } from './CDataBase';
@@ -10,7 +10,7 @@ import { CHtmlDecoder } from './CHtmlDecoder';
 const readmanga = axios.create({
   baseURL: 'http://readmanga.me',
   headers: { 'Cache-Control': 'no-cache' },
-  adapter: throttleAdapterEnhancer(axios.defaults.adapter, { threshold: 2 * 15000 })
+  adapter: throttleAdapterEnhancer(axios.defaults.adapter, { threshold: 1 * 10000 })
 })
 
 export type CommentNoticerReadMangaComment_t = {
@@ -42,8 +42,17 @@ export class CCommentNoticerReadManga {
     this._db_comments = db_comments
   }
 
+  private async _error_handler(url: string) {
+    while(true) {
+      try {        
+        return await readmanga.get(url)
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 10000))
+      }
+    }
+  }
+
   public async update(callback?: (data: CommentNoticerReadManga_t) => Promise <void>) : Promise <void> {
-    try {
     const db_model = await this._db_comments.findOne({
       service: 'readmanga'
     }) || await this._db_comments.create({
@@ -52,21 +61,21 @@ export class CCommentNoticerReadManga {
     })    
     let last_comment_id = db_model.value
 
-
-    const translater_page = await readmanga.get('http://readmanga.me/list/person/angeldev')
+    let translater_page = await this._error_handler('http://readmanga.me/list/person/angeldev')
+  
     const translater_page_dom = new JSDOM(translater_page.data)
 
     const html_decode = new CHtmlDecoder(translater_page_dom.window.document.createElement('textarea'))
   
     for (const translater of Array.from(translater_page_dom.window.document.querySelectorAll('h3 a'))) {
-      //console.log(`[ ${translater.getAttribute("title")} ]`)
+
+      const list_of_managa_page = await this._error_handler(`http://readmanga.me${translater.getAttribute("href")}`)
   
-      const list_of_managa_page = await readmanga.get(`http://readmanga.me${translater.getAttribute("href")}`)
       const list_of_managa_page_dom = new JSDOM(list_of_managa_page.data)
       for (const manga_item of Array.from(list_of_managa_page_dom.window.document.querySelectorAll('.table.table-hover tbody tr td a')).reverse()) {
         //console.log(`[${manga_item}][ ${manga_item.textContent.trim().replace(/\r?\n|\r/g,'').replace(/ {2,}/g, ' (')}) ]`)
   
-        const manga_page = await readmanga.get(`http://readmanga.me${manga_item}?mtr=1`)
+        const manga_page = await this._error_handler(`http://readmanga.me${manga_item}?mtr=1`)
   
         const manga_page_dom = new JSDOM(manga_page.data)
         const data: CommentNoticerReadManga_t = {
@@ -107,16 +116,12 @@ export class CCommentNoticerReadManga {
         }
 
         if(data.pages.length) {
-          await callback(data)
+          callback(data)
         }
       }
     }
 
     db_model.value = last_comment_id
     await db_model.save()
-    }
-    catch(ex) {
-      console.trace(ex) 
-    }
   }
 }

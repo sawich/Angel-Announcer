@@ -72,8 +72,8 @@ class CCommentNoticer {
 	/**
 	 * mangachan
 	 */
-	public async mangachan() {
-		this._mangachan.update(async (list: CommentNoticerMangaChanList_t) => {
+	private async _mangachan_f() {
+		return this._mangachan.update(async (list: CommentNoticerMangaChanList_t) => {
 			for (const comment of list.comments.reverse()) {
 				const embed = new RichEmbed()
 					.setAuthor(`${list.service.manga_title}`, list.service.icon, list.service.manga_url)
@@ -91,8 +91,8 @@ class CCommentNoticer {
 	/**
 	 * readmanga
 	 */
-	public async readmanga() {
-		this._readmanga.update(async (data: CommentNoticerReadManga_t) => {
+	private async _readmanga_f() {
+		return this._readmanga.update(async (data: CommentNoticerReadManga_t) => {
 			const embed = new RichEmbed()
 				.setColor(0xedd644)
 				.setAuthor(data.name, data.icon, data.url)
@@ -170,7 +170,15 @@ class CCommentNoticer {
 		})
 	}
 
-	public async interval(callback: () => Promise <void>, intr) {
+	public mangachan(interval: number = 2000) {
+		this._interval(() => {console.log('m'); return this._mangachan_f()}, interval)
+	}
+
+	public readmanga(interval: number = 10000) {
+		this._interval(() => {console.log('r'); return this._readmanga_f()}, interval)
+	}
+
+	private async _interval(callback: () => Promise <void>, intr) {
 		callback().finally(() => {
 			setTimeout(callback, intr)
 		})
@@ -518,8 +526,8 @@ class CApp {
 			//const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
 			
 			const comment_noticer = new CCommentNoticer(discord_client, database, channels)
-			comment_noticer.interval(comment_noticer.readmanga, 2000)
-			comment_noticer.interval(comment_noticer.mangachan, 2000)
+			comment_noticer.readmanga()
+			comment_noticer.mangachan()
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})
