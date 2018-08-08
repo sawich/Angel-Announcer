@@ -86,7 +86,7 @@ export class CGrabberDajiaochongmanhua implements IGrabber {
     return { 
       thumb: thumb_dom.window.document.querySelector('.book-thumb').getAttribute('src'),
       link: manhwa_page.config.url,
-      descripion: 'В этой манхве есть экстра главы, из-за чего на сайте нумерация сибита!', 
+      descripion: 'В этой маньхуе есть экстра главы, из-за чего на сайте нумерация сибита!', 
       name: response.data.data[item].name,
       title: thumb_dom.window.document.querySelector('.book-name').textContent,
       path

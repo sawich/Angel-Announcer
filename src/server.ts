@@ -526,7 +526,7 @@ class CApp {
 			//const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
 			
 			const comment_noticer = new CCommentNoticer(discord_client, database, channels)
-			comment_noticer.readmanga()
+			//comment_noticer.readmanga()
 			comment_noticer.mangachan()
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
