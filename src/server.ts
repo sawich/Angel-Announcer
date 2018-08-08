@@ -491,7 +491,9 @@ class CApp {
 								await channels.comments_readmanga.send(embed)
 							}
 						})
-					])
+					].map(p => p.catch(e => e))).catch(e => {
+						console.trace(e)
+					})
 					
 					await comment_noticer_update()
 				}, 1000)// * 60 * 5)
