@@ -10,7 +10,7 @@ import { CHtmlDecoder } from './CHtmlDecoder';
 const readmanga = axios.create({
   baseURL: 'http://readmanga.me',
   headers: { 'Cache-Control': 'no-cache' },
-  adapter: throttleAdapterEnhancer(axios.defaults.adapter, { threshold: 1 * 10000 })
+  adapter: throttleAdapterEnhancer(axios.defaults.adapter, { threshold: 2 * 15000 })
 })
 
 export type CommentNoticerReadMangaComment_t = {

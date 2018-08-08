@@ -39,13 +39,12 @@ import { CMediaPlayer } from './CMediaPlayer';
 // import { CManga } from './CManga'
 // import { CMediaPlayer from './CMediaPlayer'
 
-import { Permissions, Message, Client, GuildMember, RichEmbed, TextChannel, FileOptions } from 'discord.js'
+import { Message, Client, GuildMember, RichEmbed } from 'discord.js'
 import * as body_parser from 'body-parser'
 
 import * as express from 'express'
 import { Request, Response, Express } from 'express'
 
-import { AddressInfo } from 'net';
 import { CUserPlaylistManagement } from './CUserPlaylistManagement';
 import { Server } from 'http';
 import { BitlyClient } from 'bitly/dist/bitly';
@@ -54,6 +53,129 @@ import { IGrabber } from './IGrabber';
 import { unlinkSync } from 'fs';
 import { CCommentNoticerMangaChan, CommentNoticerMangaChanList_t } from './CCommentNoticerMangachan';
 import { CCommentNoticerReadManga, CommentNoticerReadManga_t } from "./CCommentNoticerReadManga";
+
+class CCommentNoticer {
+	private _discord_client: Client
+	private _mangachan: CCommentNoticerMangaChan
+	private _readmanga: CCommentNoticerReadManga
+	private _channels: CChannels
+
+	constructor(discord_client: Client, database: CDataBase, channels: CChannels) {
+		this._discord_client = discord_client
+		this._channels = channels
+
+		const yoba = this._discord_client.emojis.get('430424310050717696')
+		this._mangachan = new CCommentNoticerMangaChan(yoba, database.comments)
+		this._readmanga = new CCommentNoticerReadManga(database.comments)
+	}
+
+	/**
+	 * mangachan
+	 */
+	public async mangachan() {
+		this._mangachan.update(async (list: CommentNoticerMangaChanList_t) => {
+			for (const comment of list.comments.reverse()) {
+				const embed = new RichEmbed()
+					.setAuthor(`${list.service.manga_title}`, list.service.icon, list.service.manga_url)
+					.setThumbnail(comment.avatar)
+					.setTitle(comment.author)
+					.setURL(comment.author_link)
+					.setDescription(comment.message)
+					.setFooter(comment.datetime)
+					.setColor(0x3baaef)
+				this._channels.comments_mangachan.send({ embed })
+			}
+		})
+	}
+
+	/**
+	 * readmanga
+	 */
+	public async readmanga() {
+		this._readmanga.update(async (data: CommentNoticerReadManga_t) => {
+			const embed = new RichEmbed()
+				.setColor(0xedd644)
+				.setAuthor(data.name, data.icon, data.url)
+	
+			type embed_t = { name: string, value: string };
+	
+			const to_sent = new Array(new Array <embed_t>())
+			let current_array_id = 0
+			let current_field_id = 0
+			let embed_size = 0
+			let fields_size = 0
+			
+			for(const page of data.pages) {
+				const current_page = `***[#](${page.url})***`
+				
+				const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\▼').replace(/_{2,}/g, '○')}\n`)
+				const current_page_title = `— стр. ${1 + page.page_id} —`
+				const embed_default_size = data.name.length + current_page_title.length
+	
+				fields_size += page_fields[0].length
+				embed_size += embed_default_size + page_fields[0].length
+				if(embed_size >= 5750) {
+					to_sent.push(new Array <embed_t> ({
+						name: current_page_title,
+						value: page_fields[0]
+					}))
+	
+					current_array_id = to_sent.length - 1
+					current_field_id = to_sent[current_array_id].length - 1
+	
+					embed_size = embed_default_size
+					fields_size = page_fields[0].length
+				} else {
+					to_sent[current_array_id].push({
+						name: current_page_title,
+						value: page_fields[0]
+					})
+	
+					current_field_id = to_sent[current_array_id].length - 1
+					fields_size = page_fields[0].length
+				}
+	
+				for(const current of page_fields.slice(1)) {
+					fields_size += current.length
+					embed_size += current.length
+					if(embed_size >= 5750) {
+						to_sent.push(new Array <embed_t> ({
+							name: current_page_title,
+							value: current
+						}))
+	
+						current_array_id = to_sent.length - 1
+						current_field_id = to_sent[current_array_id].length - 1
+	
+						embed_size = embed_default_size
+						fields_size = current.length
+					} else if(fields_size >= 1024) {
+						to_sent[current_array_id].push({
+							name: current_page_title,
+							value: current
+						})
+	
+						current_field_id = to_sent[current_array_id].length - 1
+						fields_size = current.length
+					} else {
+						to_sent[current_array_id][current_field_id].value += current
+					}
+				}
+			}
+	
+			for(const s of to_sent) {
+				embed.fields = s
+				this._channels.comments_readmanga.send(embed)
+			}
+		})
+	}
+
+	public async interval(callback: () => Promise <void>, intr) {
+		callback().finally(() => {
+			setTimeout(callback, intr)
+		})
+	}
+}
 
 class CApp {
 	constructor() {
@@ -392,112 +514,12 @@ class CApp {
 				},
 			}})*/
 
-			const yoba = discord_client.emojis.get('430424310050717696')
-
-			const cn_mc = new CCommentNoticerMangaChan(yoba, database.comments)
-			const cn_rm = new CCommentNoticerReadManga(database.comments)
 
 			//const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
 			
-			const comment_noticer_update = async () => {
-				setTimeout(async () => {
-					await Promise.all([
-						cn_mc.update(async (list: CommentNoticerMangaChanList_t) => {
-							for (const comment of list.comments.reverse()) {
-								const embed = new RichEmbed()
-									.setAuthor(`${list.service.manga_title}`, list.service.icon, list.service.manga_url)
-									.setThumbnail(comment.avatar)
-									.setTitle(comment.author)
-									.setURL(comment.author_link)
-									.setDescription(comment.message)
-									.setFooter(comment.datetime)
-									.setColor(0x3baaef)
-								await channels.comments_mangachan.send({ embed })
-							}
-						}), 
-						cn_rm.update(async (data: CommentNoticerReadManga_t) => {
-							const embed = new RichEmbed()
-								.setColor(0xedd644)
-								.setAuthor(data.name, data.icon, data.url)
-					
-							type embed_t = { name: string, value: string };
-					
-							const to_sent = new Array(new Array <embed_t>())
-							let current_array_id = 0
-							let current_field_id = 0
-							let embed_size = 0
-							let fields_size = 0
-							
-							for(const page of data.pages) {
-								const current_page = `***[#](${page.url})***`
-								
-								const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\▼').replace(/_{2,}/g, '○')}\n`)
-								const current_page_title = `— стр. ${1 + page.page_id} —`
-								const embed_default_size = data.name.length + current_page_title.length
-					
-								fields_size += page_fields[0].length
-								embed_size += embed_default_size + page_fields[0].length
-								if(embed_size >= 5750) {
-									to_sent.push(new Array <embed_t> ({
-										name: current_page_title,
-										value: page_fields[0]
-									}))
-					
-									current_array_id = to_sent.length - 1
-									current_field_id = to_sent[current_array_id].length - 1
-					
-									embed_size = embed_default_size
-									fields_size = page_fields[0].length
-								} else {
-									to_sent[current_array_id].push({
-										name: current_page_title,
-										value: page_fields[0]
-									})
-					
-									current_field_id = to_sent[current_array_id].length - 1
-									fields_size = page_fields[0].length
-								}
-					
-								for(const current of page_fields.slice(1)) {
-									fields_size += current.length
-									embed_size += current.length
-									if(embed_size >= 5750) {
-										to_sent.push(new Array <embed_t> ({
-											name: current_page_title,
-											value: current
-										}))
-					
-										current_array_id = to_sent.length - 1
-										current_field_id = to_sent[current_array_id].length - 1
-					
-										embed_size = embed_default_size
-										fields_size = current.length
-									} else if(fields_size >= 1024) {
-										to_sent[current_array_id].push({
-											name: current_page_title,
-											value: current
-										})
-					
-										current_field_id = to_sent[current_array_id].length - 1
-										fields_size = current.length
-									} else {
-										to_sent[current_array_id][current_field_id].value += current
-									}
-								}
-							}
-					
-							for(const s of to_sent) {
-								embed.fields = s
-								await channels.comments_readmanga.send(embed)
-							}
-						})
-					])
-					
-					await comment_noticer_update()
-				}, 1000)// * 60 * 5)
-			}
-			
-			comment_noticer_update()
+			const comment_noticer = new CCommentNoticer(discord_client, database, channels)
+			comment_noticer.interval(comment_noticer.readmanga, 2000)
+			comment_noticer.interval(comment_noticer.mangachan, 2000)
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})
