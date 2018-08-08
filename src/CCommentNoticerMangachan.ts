@@ -104,7 +104,7 @@ export class CCommentNoticerMangaChan {
         }
       }
 
-      callback(list)
+      await callback(list)
     }
     
     db_model.value = last_comment_id
