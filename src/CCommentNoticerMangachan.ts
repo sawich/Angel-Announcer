@@ -68,7 +68,7 @@ export class CCommentNoticerMangaChan {
 
       for(let page = 1, done = 0; done != 1; ++page) {
         const manga_page = await axios.get(`${this._url}/manga/page,1,${page},${last_part_url}`)
-        console.log(`[${translater_page.status}] [${manga_page.config.url}]`)
+        // console.log(`[${translater_page.status}] [${manga_page.config.url}]`)
 
         const manga_page_dom = new JSDOM(manga_page.data)
 
