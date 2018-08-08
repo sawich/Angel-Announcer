@@ -75,6 +75,7 @@ export class CCommentNoticerMangaChan {
           const message_id = parseInt(comment.id.match(/comment-id-(\d+)/s)[1])
           if(message_id <= db_model.value) {
             done = 1
+            console.log('ma отработал')
             break
           }
           last_comment_id = Math.max(last_comment_id, message_id)
