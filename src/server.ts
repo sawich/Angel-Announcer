@@ -315,7 +315,7 @@ class CApp {
 						.setThumbnail(grabbed.thumb)
 						.attachFile({    
 							attachment: grabbed.path,
-							name: `Lily ${grabbed.name}.zip`
+							name: `${grabbed.title} ${grabbed.name}.zip`
 						})
 				
 					await message.reply({ embed })

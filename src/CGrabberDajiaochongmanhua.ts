@@ -64,7 +64,7 @@ export class CGrabberDajiaochongmanhua implements IGrabber {
 
     const parsed = JSON.parse(script.textContent.match(IMAGE_LIST_URL_regexp)[1]) as image_list_t
 
-    const path = `lily_${v4()}.zip`
+    const path = `${v4()}.zip`
     const output = createWriteStream(path);
     const archive = create('zip', { zlib: { level: 9 } } )
     const wait = new Promise((write_complete) => output.on('close', () => {
