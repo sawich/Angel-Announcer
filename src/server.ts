@@ -206,6 +206,8 @@ class CApp {
 			
 			const grabbers = new Map <string, IGrabber> ([[
 				'lily', new CGrabberDajiaochongmanhua(1378)
+			], [
+				'lala', new CGrabberDajiaochongmanhua(2328)
 			]])
 
 			//
