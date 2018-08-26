@@ -204,6 +204,21 @@ class CApp {
 				process.exit(1)
 			}
 			
+			discord_client.on ('guildMemberRemove', (member: GuildMember) => {
+				channels.log.send({ embed: {
+					color: 0xffff00,
+					author: {
+						name: 'Users',
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+					fields: [{
+						name: member.displayName,
+						value: `Покидает сервер`
+					}]
+				}})
+			})
+
 			const grabbers = new Map <string, IGrabber> ([[
 				'lily', new CGrabberDajiaochongmanhua(1378)
 			], [
