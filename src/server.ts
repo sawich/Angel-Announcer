@@ -64,9 +64,18 @@ class CCommentNoticer {
 		this._discord_client = discord_client
 		this._channels = channels
 
-		const yoba = this._discord_client.emojis.get('430424310050717696')
-		this._mangachan = new CCommentNoticerMangaChan(yoba, database.comments)
-		this._readmanga = new CCommentNoticerReadManga(database.comments)
+    const yoba = this._discord_client.emojis.get('430424310050717696')
+
+    const launch = async () => {
+      this._mangachan = new CCommentNoticerMangaChan(yoba, database.comments)
+      this._readmanga = new CCommentNoticerReadManga(database.comments)
+      await this._readmanga.update_translater_page ();
+
+			this.readmanga ()
+			this.mangachan ()
+    }
+
+    launch ()
 	}
 
 	/**
@@ -96,22 +105,22 @@ class CCommentNoticer {
 			const embed = new RichEmbed()
 				.setColor(0xedd644)
 				.setAuthor(data.name, data.icon, data.url)
-	
+
 			type embed_t = { name: string, value: string };
-	
+
 			const to_sent = new Array(new Array <embed_t>())
 			let current_array_id = 0
 			let current_field_id = 0
 			let embed_size = 0
 			let fields_size = 0
-			
+
 			for(const page of data.pages) {
 				const current_page = `***[#](${page.url})***`
-				
+
 				const page_fields = page.comments.map(comment => `${current_page} \`\`[${comment.datetime}]\`\` ***[${comment.author.replace(/\*/g, '\◘')}](${comment.author_link})*** : ${comment.message.replace(/\*/g, '\▼').replace(/_{2,}/g, '○')}\n`)
 				const current_page_title = `— стр. ${1 + page.page_id} —`
 				const embed_default_size = data.name.length + current_page_title.length
-	
+
 				fields_size += page_fields[0].length
 				embed_size += embed_default_size + page_fields[0].length
 				if(embed_size >= 5750) {
@@ -119,10 +128,10 @@ class CCommentNoticer {
 						name: current_page_title,
 						value: page_fields[0]
 					}))
-	
+
 					current_array_id = to_sent.length - 1
 					current_field_id = to_sent[current_array_id].length - 1
-	
+
 					embed_size = embed_default_size
 					fields_size = page_fields[0].length
 				} else {
@@ -130,11 +139,11 @@ class CCommentNoticer {
 						name: current_page_title,
 						value: page_fields[0]
 					})
-	
+
 					current_field_id = to_sent[current_array_id].length - 1
 					fields_size = page_fields[0].length
 				}
-	
+
 				for(const current of page_fields.slice(1)) {
 					fields_size += current.length
 					embed_size += current.length
@@ -143,10 +152,10 @@ class CCommentNoticer {
 							name: current_page_title,
 							value: current
 						}))
-	
+
 						current_array_id = to_sent.length - 1
 						current_field_id = to_sent[current_array_id].length - 1
-	
+
 						embed_size = embed_default_size
 						fields_size = current.length
 					} else if(fields_size >= 1024) {
@@ -154,7 +163,7 @@ class CCommentNoticer {
 							name: current_page_title,
 							value: current
 						})
-	
+
 						current_field_id = to_sent[current_array_id].length - 1
 						fields_size = current.length
 					} else {
@@ -162,25 +171,27 @@ class CCommentNoticer {
 					}
 				}
 			}
-	
+
 			for(const s of to_sent) {
 				embed.fields = s
 				this._channels.comments_readmanga.send(embed)
-			}
+      }
 		})
 	}
 
-	public mangachan(interval: number = 2000) {
+	public mangachan(interval: number = 60 * 1000) {
 		this._interval(() => {console.log('m'); return this._mangachan_f()}, interval)
 	}
 
-	public readmanga(interval: number = 10000) {
-		this._interval(() => {console.log('r'); return this._readmanga_f()}, interval)
+	public readmanga(interval: number = 60 * 1000) {
+		this._interval(() => {console.log('r'); return this._readmanga_f();}, interval)
 	}
 
 	private async _interval(callback: () => Promise <void>, intr) {
 		return callback().finally(() => {
-			return setTimeout(() => { return this._interval(callback, intr) }, intr)
+			return setTimeout(() => { 
+        return this._interval(callback, intr)
+      }, intr)
 		})
 	}
 }
@@ -188,13 +199,13 @@ class CCommentNoticer {
 class CApp {
 	constructor() {
 		const bitly = new BitlyClient(process.env.BITLY_TOKEN, {});
-		
+
 		new Promise(async () => {
 			const database = new CDataBase()
 			const database_load = database.load()
 
 			const discord_client: Client = new Client
-			
+
 			discord_client.on('error', (ex) => console.error)
 
 			try {
@@ -203,7 +214,7 @@ class CApp {
 				console.error(ex)
 				process.exit(1)
 			}
-			
+
 			discord_client.on ('guildMemberRemove', (member: GuildMember) => {
 				channels.log.send({ embed: {
 					color: 0xffff00,
@@ -232,7 +243,7 @@ class CApp {
 			process.on('uncaughtException', (ex) => {
 				channels.log.send({ embed: {
 					color: 0xff0000,
-					title: `${ex.message}`,	
+					title: `${ex.message}`,
 					description: `\`\`\`${ex.stack}\`\`\``,
 					author: {
 						name: guilds.main.member(discord_client.user.id).displayName,
@@ -245,7 +256,7 @@ class CApp {
 				console.error((new Date).toUTCString() + ' uncaughtException:', ex.message)
 				console.error(ex.stack)
 			})
-			
+
 			await database_load
 
 			const maiden_management = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
@@ -262,7 +273,7 @@ class CApp {
 					fields: angelmaidens.slice(0, 25).map((maiden) => ({ name: maiden.id, value: `${maiden}`, inline: true }))
 				}})
 			})
-			
+
 			maiden_management.once('maintenance_remove',  async (angelmaidens: CMaidenManagementItem[]) => {
 				channels.log.send({ embed: {
 					color: 0xffff00,
@@ -322,25 +333,25 @@ class CApp {
 					if(!grabber) { return }
 
 					const grabbed = await grabber.grab(parseInt(args.shift()))
-		
+
 					const embed = new RichEmbed()
 						.setColor(0xffff00)
 						.setDescription(grabbed.descripion)
 						.setAuthor(`${grabbed.title} (${grabbed.name})`, discord_client.user.avatarURL, grabbed.link)
 						.setThumbnail(grabbed.thumb)
-						.attachFile({    
+						.attachFile({
 							attachment: grabbed.path,
 							name: `${grabbed.title} ${grabbed.name}.zip`
 						})
-				
+
 					await message.reply({ embed })
 					unlinkSync(grabbed.path)
 				}],
 
-				[ 'links', async (message: Message, args: string[]) => {	
+				[ 'links', async (message: Message, args: string[]) => {
 					if(args.length < 1) { return }
-		
-					const response = await Promise.all(args.map((url: string) => bitly.shorten(url))	)				
+
+					const response = await Promise.all(args.map((url: string) => bitly.shorten(url))	)
 
 					message.reply({ embed: {
 						color: 0x00bfff,
@@ -361,10 +372,10 @@ class CApp {
 
 					switch (args.shift()) {
 					// список дев
-					case 'list': 
+					case 'list':
 						try {
 							const result: CMaidenManagementList = await maiden_management.list(parseInt(args[0]) || 1)
-						 
+
 							message.reply({ embed: {
 								color: 0x00bfff,
 								footer: {
@@ -393,7 +404,7 @@ class CApp {
 						}
 					break
 					// редакт админом
-					case 'edit': 
+					case 'edit':
 						try {
 							await maiden_management.edit(message, args[0], args[1])
 							message.reply({ embed: {
@@ -418,7 +429,7 @@ class CApp {
 						}
 					break
 					// редакт себя юзером
-					case 'set': 
+					case 'set':
 						try {
 							await maiden_management.set(message, args[0])
 							message.reply({ embed: {
@@ -443,21 +454,7 @@ class CApp {
 						}
 					break
 					}
-				} ],
-
-				[ 'pl', async(message: Message, args: string[]) => {
-					const playlist = await user_playlist_management.get(message)
-					
-					switch(args.shift()) {
-						case 'del': break
-						case 'add': break
-						case 'list': break
-					}
-				}],
-
-			// CUserPlaylistManagement
-
-				[ 'ping', (message: Message) => message.reply('pong')]
+				} ]
 			]))
 
 			discord_client.on('message', (message: Message) => {
@@ -514,37 +511,7 @@ class CApp {
 				process.exit(1)
 			})
 
-			/*server.once('listening', () => {
-				const addr = server.address() as AddressInfo;
-
-				channels.log.send({ embed: {
-					color: 0x00ff00,
-					description: `App listening at http://${addr.address}:${addr.port}`,
-					author: {
-						name: guilds.main.member(discord_client.user.id).displayName,
-						icon_url: discord_client.user.avatarURL,
-						url: config.site
-					},
-				}})
-			})*/
-
-			//
-			/*channels.log.send({ embed: {
-				color: 0x00ff00,
-				description: `Logged in as ${discord_client.user.tag}!`,
-				author: {
-					name: guilds.main.member(discord_client.user.id).displayName,
-					icon_url: discord_client.user.avatarURL,
-					url: config.site
-				},
-			}})*/
-
-
-			//const log = discord_client.guilds.get('469205724824731648').channels.get('473850605031522315') as TextChannel
-			
-			const comment_noticer = new CCommentNoticer(discord_client, database, channels)
-			comment_noticer.readmanga()
-			comment_noticer.mangachan()
+			new CCommentNoticer(discord_client, database, channels)
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})
@@ -552,3 +519,4 @@ class CApp {
 }
 
 new CApp
+
