@@ -48,18 +48,24 @@ export class CCommentNoticerReadManga {
 
   private _manga_links: string[]
 
-  public async update_translater_page () {    
-    const translater_page = await fetch ('http://readmanga.me/list/person/angeldev', this._request_options)
-    const translater_page_dom = new JSDOM(await translater_page.text ())
+  public async update_translater_page () { 
+    try {
+      const translater_page = await fetch ('http://readmanga.me/list/person/angeldev', this._request_options)
+      const translater_page_dom = new JSDOM(await translater_page.text ())
 
-    this._manga_links = Array.from(translater_page_dom.window.document.querySelectorAll('h3 a')).map ((item: Element) => {
-      return `http://readmanga.me${item.getAttribute("href")}`
-    });
+      this._manga_links = Array.from(translater_page_dom.window.document.querySelectorAll('h3 a')).map ((item: Element) => {
+        return `http://readmanga.me${item.getAttribute("href")}`
+      });
 
-    console.log ('readmanga')
-    console.log(this._manga_links)
+      console.log ('readmanga')
+      console.log(this._manga_links)
 
-    setTimeout(() => this.update_translater_page, 3600000); // 1 hour
+      setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
+    } catch (error) {
+      console.error (`RM update manga list [${error}]`)
+      
+      setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
+    }
   }
   
   constructor(db_comments: Model <IDataBaseLastMangaCommentIdModel>) {
