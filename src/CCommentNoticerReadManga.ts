@@ -59,7 +59,7 @@ export class CCommentNoticerReadManga {
     console.log ('readmanga')
     console.log(this._manga_links)
 
-    setTimeout(this.update_translater_page, 3600000); // 1 hour
+    setTimeout(() => this.update_translater_page, 3600000); // 1 hour
   }
   
   constructor(db_comments: Model <IDataBaseLastMangaCommentIdModel>) {
