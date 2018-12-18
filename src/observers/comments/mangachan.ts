@@ -121,6 +121,8 @@ export class mangachan {
     yoba: Emoji, 
     db_comments: Model <IDataBaseLastMangaCommentIdModel>)
   {
+    this._channel = channel
+    this._color = color
     this._yoba = yoba
     this._db_comments = db_comments
 

@@ -121,6 +121,8 @@ export class grouple {
     icon: string,
     db_comments: Model <IDataBaseLastMangaCommentIdModel>)
   {
+    this._channel = channel
+    this._color = color
     this._favicon = icon
     this._service = service
     this._db_comments = db_comments
