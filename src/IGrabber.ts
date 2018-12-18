@@ -1,7 +1,7 @@
 export type grabber_t = {
   name: string,
   path: string,
-  descripion?: string,
+  description?: string,
   link: string,
   thumb: string,
   title: string

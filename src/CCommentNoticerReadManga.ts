@@ -31,7 +31,7 @@ export class CCommentNoticerReadManga {
   private _favicon = 'https://images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png'
   private _db_comments: Model <IDataBaseLastMangaCommentIdModel>
 
-  private _request_options = {
+  private _request_options: RequestInit = {
     method: 'GET',
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml',
@@ -128,11 +128,15 @@ export class CCommentNoticerReadManga {
               }
     
               if(current.comments.length) {
+                current.comments = current.comments.reverse ()
                 data.pages.push(current)
               }
             }
     
             if(data.pages.length) {
+              data.pages = data.pages.sort ((a, b) => {
+                return a.page_id - b.page_id;
+              })
               callback(data)
             }            
           } catch (error) {
