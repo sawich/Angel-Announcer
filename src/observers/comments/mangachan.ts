@@ -22,7 +22,7 @@ export class mangachan {
       console.log(this._manga_links)
 
       setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
-    } catch (e) {
+    } catch (error) {
       this.m_emiter.emit ('error', `mangachan.me [${error.stack}]`)
       
       setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
