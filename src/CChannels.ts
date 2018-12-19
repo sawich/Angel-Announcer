@@ -30,12 +30,12 @@ export class CChannels {
 	}
 
 	// channel for logs | \WoW/
-	public get log(): TextChannel { return this._log }
+	public get log() { return this._log }
 
 	// channel for deve test's
-	public get test(): TextChannel { return this._test }
+	public get test() { return this._test }
 
 	// channel for announcement manga
-	public get announcement(): TextChannel { return this._announcement }
+	public get announcement() { return this._announcement }
 
 }

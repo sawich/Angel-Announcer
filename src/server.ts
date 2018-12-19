@@ -59,17 +59,42 @@ class CCommentNoticer {
 	private _mintmanga: comments.grouple
 	private _channels: CChannels
 
-  private async _on_error (message: string) {
-    this._channels.log.send ({ embed: {
-      color: 0xff0000FF,
-      description: `\`\`\`${message}\`\`\``
-    }})
+  private async _on_error (message: Error) {
+    await this._channels.log.send ({ embed: {
+      color: 0xFF0000,
+      title: message.name,
+      description: message.message,
+      fields: [{
+        name: 'stack trace',
+        value: `\`\`\`ps\n${message.stack}\`\`\``
+      }],
+      timestamp: new Date
+    }})    
   }
 
-	constructor(discord_client: Client, database: CDataBase, guilds: CGuilds) {
-		this._discord_client = discord_client
-    const yoba = this._discord_client.emojis.get('430424310050717696')
+  private async _on_translator_update (service: comments.types.events.update) {
+    await this._channels.log.send ({ embed: {
+      color: service.color,
+      author: {        
+        name: service.name,
+        icon_url: service.icon_url,
+        url: service.url
+      },
+      description: 'Список манги обновлён',
+      timestamp: new Date
+    }})    
+  }
 
+	constructor(
+    discord_client: Client,
+    channels: CChannels,
+    database: CDataBase,
+    guilds: CGuilds)
+  {
+    this._discord_client = discord_client
+    this._channels = channels
+
+    const yoba = this._discord_client.emojis.get('430424310050717696')
     const launch = async () => {
 //
 //   MANGACHAN
@@ -81,12 +106,14 @@ class CCommentNoticer {
       }
       
       this._mangachan = new comments.mangachan(0x3baaef, mangachan_channel, yoba, database.comments)
-      this._mangachan.error_subscribe (this._on_error.bind (this))
+      this._mangachan.subscribe_error (this._on_error.bind (this))
+      this._mangachan.subscribe_translator_update (this._on_translator_update.bind (this))
       await this._mangachan.update_translater_page ()
-
+      
 //
 //   MINTMANGA
 //
+
       const mintmanga_channel = guilds.main.channels.get (config.channelid.comments.mintmanga) as TextChannel
       if (!mintmanga_channel) {
         console.error (`mintmanga_channel [id:${config.channelid.comments.mintmanga}] not found`)
@@ -100,7 +127,8 @@ class CCommentNoticer {
         'https://cdn.discordapp.com/attachments/407454794056204290/524706486572810270/cbdn8-xrzud.png',
         database.comments
       )
-      this._mintmanga.error_subscribe (this._on_error.bind (this))
+      this._mintmanga.subscribe_error (this._on_error.bind (this))
+      this._mintmanga.subscribe_translator_update (this._on_translator_update.bind (this))
       await this._mintmanga.update_translater_page ()
 
 //
@@ -119,9 +147,9 @@ class CCommentNoticer {
         'https://images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png',
         database.comments
       )
-      this._readmanga.error_subscribe (this._on_error.bind (this))
+      this._readmanga.subscribe_error (this._on_error.bind (this))
+      this._readmanga.subscribe_translator_update (this._on_translator_update.bind (this))
       await this._readmanga.update_translater_page ()
-
 
 			this.mangachan ()
 			this.mintmanga ()
@@ -134,6 +162,7 @@ class CCommentNoticer {
 //
 //   MANGACHAN
 //
+
 	private async _mangachan_f() {
     const service = await this._mangachan.update ()
     
@@ -304,6 +333,27 @@ class CApp {
 			//
 			const guilds   = new CGuilds(discord_client)
 			const channels = new CChannels(guilds)
+
+			process.on('unhandledRejection', (reason: Error | any, p: Promise <any>) => {        
+        channels.log.send ({ embed: {
+          color: 0xFF0000,
+          title: reason.name,
+          description: reason.message,
+          fields: [{
+            name: 'stack trace',
+            value: `\`\`\`ps\n${reason.stack}\`\`\``
+          }],
+					author: {
+						name: guilds.main.member(discord_client.user.id).displayName,
+						icon_url: discord_client.user.avatarURL,
+						url: config.site
+					},
+          timestamp: new Date
+        }}).catch(console.error)      
+
+				console.error((new Date).toUTCString() + ' unhandledRejection:', reason.message)
+				console.error(reason.stack)
+			})
 
 			process.on('uncaughtException', (ex) => {
 				channels.log.send({ embed: {
@@ -573,7 +623,7 @@ class CApp {
 				process.exit(1)
 			})
 
-			new CCommentNoticer(discord_client, database, guilds)
+			new CCommentNoticer(discord_client, channels, database, guilds)
 
 			console.log(`Logged in as ${discord_client.user.tag}!`)
 		})

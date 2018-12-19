@@ -17,26 +17,25 @@ export class grouple {
       this._manga_links = Array.from(translater_page_dom.window.document.querySelectorAll('h3 a')).map ((item: Element) => {
         return `http://${this._service}${item.getAttribute("href")}`
       });
+      
+      const service: types.events.update = {
+        color: this._color,
+        icon_url: this._favicon,
+        name: this._service,
+        url: `http://${this._service}`
+      }
 
-      console.log (this._service)
-      console.log(this._manga_links)
+      this.m_emiter.emit ('translator_update', service)
 
       setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
     } catch (error) {
-      this.m_emiter.emit ('error', `${this._service} [${error.stack}]`)
+      this.m_emiter.emit ('error', error.stack)
       
       setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
     }
   }
 
-  public async update () {
-    const db_model = await this._db_comments.findOne({
-      service: this._service
-    }) || await this._db_comments.create({
-      service: this._service,
-      value: 0
-    })
-    
+  public async update () {    
     let comment_ids = []
     const items: types.multiple.service = {
       channel: this._channel,
@@ -45,8 +44,15 @@ export class grouple {
       icon: this._favicon
     }
 
-    await Promise.all (this._manga_links.map (async (manga_link) => {
-      try {
+    try {      
+      const db_model = await this._db_comments.findOne({
+        service: this._service
+      }) || await this._db_comments.create({
+        service: this._service,
+        value: 0
+      })
+
+      await Promise.all (this._manga_links.map (async (manga_link) => {
         const main_manga_page = await fetch (manga_link, this._request_options)
         const main_manga_page_dom = new JSDOM (await main_manga_page.text ())
         const html_decode = new CHtmlDecoder(main_manga_page_dom.window.document.createElement('textarea'))
@@ -99,19 +105,23 @@ export class grouple {
             items.mangas.push (data)
           }    
         }
-      } catch (error) {
-        this.m_emiter.emit ('error', `${this._service} [${error.stack}]`)
-      }
-    }))
+      }))
 
-    db_model.value = Math.max (db_model.value, ...comment_ids)
-    await db_model.save()
+      db_model.value = Math.max (db_model.value, ...comment_ids)
+      await db_model.save()
+    } catch (error) {
+      this.m_emiter.emit ('error', error.stack)
+    }
 
     return items;
   }
 
-  public error_subscribe (callback: Function) {
+  public subscribe_error (callback: Function) {
     this.m_emiter.addListener ('error', callback.bind (this))
+  }
+
+  public subscribe_translator_update (callback: Function) {
+    this.m_emiter.addListener ('translator_update', callback.bind (this))
   }
   
   constructor(

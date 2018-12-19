@@ -21,6 +21,15 @@ export namespace types {
 //   GROUPLE
 //
 
+  export namespace events {
+    export type update = {
+      url: string
+      name: string
+      color: number
+      icon_url: string
+    }
+  }
+
   export namespace multiple {
     export type comment_t = {
       author_link: string

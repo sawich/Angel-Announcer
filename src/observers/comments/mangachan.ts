@@ -1,4 +1,4 @@
-import fetch, { RequestInit } from 'node-fetch'
+import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { IDataBaseLastMangaCommentIdModel } from './../../CDataBase'
 import { JSDOM } from 'jsdom'
@@ -9,7 +9,7 @@ import { Emoji, TextChannel } from 'discord.js'
 import * as events from 'events'
 
 export class mangachan {
-  public async update_translater_page () { 
+  public async update_translater_page () {
     try {
       const translater_page = await fetch('http://mangachan.me/translation/70489/')
       const translater_page_dom = new JSDOM(await translater_page.text ())
@@ -17,26 +17,27 @@ export class mangachan {
       this._manga_links = Array.from(translater_page_dom.window.document.querySelectorAll('.title_link')).map ((item: Element) => {
         return `http://mangachan.me${item.getAttribute("href")}`
       });
+      
+      const service: types.events.update = {
+        color: this._color,
+        icon_url: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png',
+        name: 'mangachan.me',
+        url: 'http://mangachan.me'
+      }
+
+      this.m_emiter.emit ('translator_update', service)
 
       console.log('mangachan.me')
       console.log(this._manga_links)
-
       setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
     } catch (error) {
-      this.m_emiter.emit ('error', `mangachan.me [${error.stack}]`)
-      
+      this.m_emiter.emit ('error', error)
+
       setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
     }
   }
 
   public async update() {
-    const db_model = await this._db_comments.findOne({
-      service: 'mangachan.me'
-    }) || await this._db_comments.create({
-      service: 'mangachan.me',
-      value: 0
-    })
-
     let comment_ids = []
     const service: types.single.service_t = {
       channel: this._channel,
@@ -45,8 +46,14 @@ export class mangachan {
       icon: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png'
     }
 
-    await Promise.all (this._manga_links.map (async (manga_link) => {
-      try {
+    try {      
+      const db_model = await this._db_comments.findOne({
+        service: 'mangachan.me'
+      }) || await this._db_comments.create({
+        service: 'mangachan.me',
+        value: 0
+      })
+      await Promise.all (this._manga_links.map (async (manga_link) => {
         const html_decoder = new CHtmlDecoder(new JSDOM().window.document.createElement('textarea'))
 
         const last_part_url = manga_link.replace('http://mangachan.me/manga/', '')
@@ -71,7 +78,7 @@ export class mangachan {
             }
 
             comment_ids.push (message_id)
-  
+
             let message = html_decoder.decode(comment.querySelector('[id^=comm-id-]').innerHTML)
               .replace(/<!--dle_spoiler-->.*?<!--spoiler_text-->(.*?)<!--spoiler_text_end-->.*?<!--\/dle_spoiler-->/g, '```diff\n+ Спойлер\n\n$1```')
               .replace(/<!--QuoteBegin(?:(?:\s+(.*?)\s+)|)-->.*?<!--QuoteEBegin-->(.*?)<!--QuoteEnd-->.*?<!--QuoteEEnd-->/g, '```ini\n[ $1 ]\n\n$2\```')
@@ -81,10 +88,10 @@ export class mangachan {
               .replace(/<i>(.*?)<\/i>/g, '*$1*')
               .replace(/<u>(.*?)<\/u>/g, '__$1__')
               .replace(/<a.*?href="(.*?)".*?>(.*?)<\/a>/g, '[$2]($1)')
-  
+
             const [comment_author, , comment_link] = Array.from(comment.querySelectorAll('.comment_left a'))
             const message_date = comment.querySelector('.comment_left').children[3].textContent.replace(/\((.*?)\)/s, '$1')
-  
+
             manga.comments.push({
               author: comment_author.textContent,
               author_link: comment_author.getAttribute('href'),
@@ -99,26 +106,29 @@ export class mangachan {
           manga_page_dom = new JSDOM(await manga_page.text ())
         }
         service.mangas.push (manga)
+      }))
 
-      } catch (error) {
-        this.m_emiter.emit ('error', `mangachan.me [${error.stack}]`)
-      }     
-    }))
-
-    db_model.value = Math.max (db_model.value, ...comment_ids)
-    await db_model.save()
+      db_model.value = Math.max (db_model.value, ...comment_ids)
+      await db_model.save()
+    } catch (error) {
+      this.m_emiter.emit ('error', error)
+    }
 
     return service
   }
 
-  public error_subscribe (callback: Function) {
+  public subscribe_error (callback: Function) {
     this.m_emiter.addListener ('error', callback.bind (this))
+  }
+
+  public subscribe_translator_update (callback: Function) {
+    this.m_emiter.addListener ('translator_update', callback.bind (this))
   }
 
   constructor(
     color: number,
     channel: TextChannel,
-    yoba: Emoji, 
+    yoba: Emoji,
     db_comments: Model <IDataBaseLastMangaCommentIdModel>)
   {
     this._channel = channel
@@ -128,12 +138,12 @@ export class mangachan {
 
     this.m_emiter = new events.EventEmitter
   }
-  
+
   private m_emiter: events.EventEmitter
 
   private _color: number
   private _channel: TextChannel
-  
+
   private _yoba: Emoji
   private _db_comments: Model <IDataBaseLastMangaCommentIdModel>
   private _manga_links: string[]
