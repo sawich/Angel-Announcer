@@ -22,7 +22,8 @@ export class mangachan {
         color: this._color,
         icon_url: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png',
         name: 'mangachan.me',
-        url: 'http://mangachan.me'
+        url: 'http://mangachan.me',
+        count: this._manga_links.length
       }
 
       this.m_emiter.emit ('translator_update', service)

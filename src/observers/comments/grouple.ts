@@ -22,7 +22,8 @@ export class grouple {
         color: this._color,
         icon_url: this._favicon,
         name: this._service,
-        url: `http://${this._service}`
+        url: `http://${this._service}`,
+        count: this._manga_links.length
       }
 
       this.m_emiter.emit ('translator_update', service)

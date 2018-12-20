@@ -27,6 +27,7 @@ export namespace types {
       name: string
       color: number
       icon_url: string
+      count: number
     }
   }
 

@@ -387,7 +387,18 @@ class CApp {
 
 			new notifications.comments (discord_client, channels, database, guilds)
 
-			console.log(`Logged in as ${discord_client.user.tag}!`)
+      console.log(`Logged in as ${discord_client.user.tag}!`)
+      
+      channels.log.send ({ embed: {
+        color: 0x00bfff,
+        description: 'Сервис перезапущен',
+        author: {
+          name: guilds.main.member(discord_client.user.id).displayName,
+          icon_url: discord_client.user.avatarURL,
+          url: config.site
+        },
+        timestamp: new Date
+      }}).catch(console.error)   
 		})
 	}
 }

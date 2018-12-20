@@ -1,5 +1,5 @@
 import config from './config/config'
-import { Client, Guild } from "discord.js"
+import { Client, Guild } from 'discord.js'
 
 export class CGuilds {
 

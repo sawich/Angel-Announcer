@@ -25,6 +25,10 @@ export class comments {
     }})    
   }
 
+  private declOfNum(n, titles) {
+    return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
+  }
+
   private async _on_translator_update (service: observers_comments.types.events.update_t) {
     this._channels.log.send ({ embed: {
       color: service.color,
@@ -33,7 +37,7 @@ export class comments {
         icon_url: service.icon_url,
         url: service.url
       },
-      description: 'Список манги обновлён',
+      description: `Список манги обновлён | ${service.count} ${this.declOfNum (service.count, [ 'линк', 'линка', 'линков' ])}`,
       timestamp: new Date
     }})    
   }
