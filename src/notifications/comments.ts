@@ -25,7 +25,7 @@ export class comments {
     }})    
   }
 
-  private declOfNum(n, titles) {
+  private declOfNum(n: number, titles: string[]) {
     return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
   }
 
@@ -37,8 +37,8 @@ export class comments {
         icon_url: service.icon_url,
         url: service.url
       },
-      description: `Список манги обновлён | ${service.count} ${this.declOfNum (service.count, [ 'линк', 'линка', 'линков' ])}`,
-      timestamp: new Date
+      description: 'Список манги обновлён',
+      timestamp: `${new Date} |  | ${service.count} ${this.declOfNum (service.count, [ 'линк', 'линка', 'линков' ])}`
     }})    
   }
 
