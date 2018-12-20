@@ -30,7 +30,7 @@ export class grouple {
 
       setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
     } catch (error) {
-      this.m_emiter.emit ('error', error.stack)
+      this.m_emiter.emit ('error', error)
       
       setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
     }
@@ -107,7 +107,7 @@ export class grouple {
       db_model.value = Math.max (db_model.value, ...comment_ids)
       await db_model.save()
     } catch (error) {
-      this.m_emiter.emit ('error', error.stack)
+      this.m_emiter.emit ('error', error)
     }
   }
 
