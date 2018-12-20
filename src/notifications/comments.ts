@@ -221,18 +221,18 @@ export class comments {
 	}
 
 	public mangachan(interval: number = 60 * 1000) {
-		this._interval(this._mangachan.update.bind (this), interval)
+		this._interval(this._mangachan.update, interval)
 	}
 
 	public mintmanga(interval: number = 60 * 1000) {
-		this._interval(this._mintmanga.update.bind (this), interval)
+		this._interval(this._mintmanga.update, interval)
 	}
 
 	public readmanga(interval: number = 60 * 1000) {
-		this._interval(this._readmanga.update.bind (this), interval)
+		this._interval(this._readmanga.update, interval)
 	}
 
-	private async _interval(callback: () => Promise <void>, intr: number) {
-		return callback().finally(setTimeout.bind(this, this._interval.bind(this, callback, intr), intr))
+	private async _interval(callback: Function, intr: number) {
+		return callback().finally(setTimeout.bind(this._interval.bind(this, callback, intr), intr))
 	}
 }
