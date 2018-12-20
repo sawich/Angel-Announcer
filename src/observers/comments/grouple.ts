@@ -7,6 +7,7 @@ import { types } from './../comments'
 import { TextChannel } from 'discord.js'
 
 import * as events from 'events'
+import config from '../../config/config'
 
 export class grouple {
   public async update_translater_page () { 
@@ -28,15 +29,15 @@ export class grouple {
 
       this.m_emiter.emit ('translator_update', service)
 
-      setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
+      setTimeout(this.update_translater_page.bind (this), config.comments.time.translator)
     } catch (error) {
       this.m_emiter.emit ('error', error)
-      
-      setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
+
+      setTimeout(this.update_translater_page.bind (this), config.comments.time.translator_error)
     }
   }
 
-  public async update () {    
+  public update = async () => {    
     let comment_ids = []
 
     try {      

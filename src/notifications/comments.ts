@@ -10,19 +10,25 @@ export class comments {
 	private _mangachan: observers_comments.mangachan
 	private _readmanga: observers_comments.grouple
 	private _mintmanga: observers_comments.grouple
-	private _channels: CChannels
+  private _channels: CChannels
+  private _guilds: CGuilds
 
   private async _on_error (message: Error) {
     this._channels.log.send ({ embed: {
       color: 0xFF0000,
       title: message.name,
       description: message.message,
+      author: {
+        name: this._guilds.main.member(this._discord_client.user.id).displayName,
+        icon_url: this._discord_client.user.avatarURL,
+        url: config.site
+      },
       fields: [{
         name: 'stack trace',
         value: `\`\`\`ps\n${message.stack}\`\`\``
       }],
       timestamp: new Date
-    }})    
+    }})
   }
 
   private declOfNum(n: number, titles: string[]) {
@@ -32,21 +38,29 @@ export class comments {
   private async _on_translator_update (service: observers_comments.types.events.update_t) {
     this._channels.log.send ({ embed: {
       color: service.color,
-      author: {        
-        name: service.name,
-        icon_url: service.icon_url,
-        url: service.url
+      author: {
+        name: this._guilds.main.member(this._discord_client.user.id).displayName,
+        icon_url: this._discord_client.user.avatarURL,
+        url: config.site
+      },
+      url: service.url,
+      title: service.name,
+      thumbnail: {
+        url: service.icon_url
+      },
+      footer: {
+        text: `${service.count} ${this.declOfNum (service.count, [ 'линк', 'линка', 'линков' ])}`
       },
       description: 'Список манги обновлён',
-      timestamp: `${new Date} |  | ${service.count} ${this.declOfNum (service.count, [ 'линк', 'линка', 'линков' ])}`
-    }})    
+      timestamp: new Date
+    }})
   }
 
 //
 //   MANGACHAN
 //
 
-  private async _on_update_single (service: observers_comments.types.single.service_t) {    
+  private async _on_update_single (service: observers_comments.types.single.service_t) {
     const embed = new RichEmbed()
       .setColor(service.color)
       .setAuthor(`${service.manga.name}`, service.icon, service.manga.url)
@@ -151,6 +165,7 @@ export class comments {
   {
     this._discord_client = discord_client
     this._channels = channels
+    this._guilds = guilds
 
     const yoba = this._discord_client.emojis.get('430424310050717696')
     const launch = async () => {
@@ -162,7 +177,7 @@ export class comments {
         console.error (`mangachan_channel [id:${config.channelid.comments.mangachan}] not found`)
         process.exit(1)
       }
-      
+
       this._mangachan = new observers_comments.mangachan(0x3baaef, mangachan_channel, yoba, database.comments)
       this._mangachan.subscribe_error (this._on_error.bind (this))
       this._mangachan.subscribe_translator_update (this._on_translator_update.bind (this))
@@ -204,7 +219,7 @@ export class comments {
         0xedd644,
         readmanga_channel,
         'readmanga.me',
-        'https://images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png',
+        'https://images-ext-1.discordapp.net/external/yarTrkbfii08uiLg4t3976lJ8UO7vTJ911m0HlGFZbs/https/images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png?width=16&height=16',
         database.comments
       )
       this._readmanga.subscribe_error (this._on_error.bind (this))
@@ -221,18 +236,19 @@ export class comments {
 	}
 
 	public mangachan(interval: number = 60 * 1000) {
-		this._interval(this._mangachan.update, interval)
+		this._interval(this._mangachan.update.bind(this), interval)
 	}
 
 	public mintmanga(interval: number = 60 * 1000) {
-		this._interval(this._mintmanga.update, interval)
-	}
+		this._interval(this._mintmanga.update.bind(this), interval)
+  }
 
 	public readmanga(interval: number = 60 * 1000) {
-		this._interval(this._readmanga.update, interval)
+		this._interval(this._readmanga.update.bind(this), interval)
 	}
 
-	private async _interval(callback: Function, intr: number) {
-		return callback().finally(setTimeout.bind(this._interval.bind(this, callback, intr), intr))
+	private async _interval(callback: () => Promise <void>, intr: number) {
+		return callback().finally(
+      setTimeout.bind (this, this._interval.bind(this, callback, intr), intr))
 	}
 }

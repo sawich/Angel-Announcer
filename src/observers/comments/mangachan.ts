@@ -7,9 +7,10 @@ import { types } from './../comments'
 import { Emoji, TextChannel } from 'discord.js'
 
 import * as events from 'events'
+import config from '../../config/config'
 
 export class mangachan {
-  public async update_translater_page () {
+  public update_translater_page = async () => {
     try {
       const translater_page = await fetch('http://mangachan.me/translation/70489/')
       const translater_page_dom = new JSDOM(await translater_page.text ())
@@ -28,17 +29,15 @@ export class mangachan {
 
       this.m_emiter.emit ('translator_update', service)
 
-      console.log('mangachan.me')
-      console.log(this._manga_links)
-      setTimeout(this.update_translater_page.bind (this), 3600000); // 1 hour
+      setTimeout(this.update_translater_page.bind (this), config.comments.time.translator)
     } catch (error) {
       this.m_emiter.emit ('error', error)
 
-      setTimeout(this.update_translater_page.bind (this), 10000); // 10 sec
+      setTimeout(this.update_translater_page.bind (this), config.comments.time.translator_error)
     }
   }
 
-  public async update() {
+  public update = async () => {
     let comment_ids = []
 
     try {      
@@ -115,7 +114,7 @@ export class mangachan {
       await db_model.save()
     } catch (error) {
       this.m_emiter.emit ('error', error)
-    }
+    }    
   }
 
   public subscribe_error (callback: Function) {

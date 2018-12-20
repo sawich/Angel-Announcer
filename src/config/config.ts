@@ -27,5 +27,12 @@ export default Object.freeze({
 	},
 	vk: {
 		tag: '#releases@angeldevmanga'
-	}
+  },
+  comments: {
+    time: {
+      translator: 3600000,
+      translator_error: 10000,
+      comments: 60 * 3600
+    }
+  }
 })
