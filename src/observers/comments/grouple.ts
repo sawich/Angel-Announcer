@@ -18,7 +18,7 @@ export class grouple {
         return `http://${this._service}${item.getAttribute("href")}`
       });
       
-      const service: types.events.update = {
+      const service: types.events.update_t = {
         color: this._color,
         icon_url: this._favicon,
         name: this._service,
@@ -37,12 +37,6 @@ export class grouple {
 
   public async update () {    
     let comment_ids = []
-    const items: types.multiple.service = {
-      channel: this._channel,
-      color: this._color,
-      mangas: [],
-      icon: this._favicon
-    }
 
     try {      
       const db_model = await this._db_comments.findOne({
@@ -61,16 +55,10 @@ export class grouple {
           const manga_page = await fetch (`http://${this._service}${manga_item}?mtr=1`, this._request_options)
           
           const manga_page_dom = new JSDOM(await manga_page.text ())
-          const data: types.multiple.manga_t = {
-            name: `${manga_item.textContent.trim().replace(/\r?\n|\r/g,'').replace(/ {2,}/g, ' (')})`,
-            url: main_manga_page.url,
-            pages: []
-          }
-    
+          const pages: types.multiple.pages_t = []
           const parser_comment = new RegExp(/<a href="(.*?)">(.*?)(?: <i.*><\/i>|)<\/a>: <span>(.*?) <span.*?claimTwitt\((.*?),.*?<span>([\d]{2}\/[\d]{2}\/[\d]{2})/)
           const parser_page_id = new RegExp(/cm_(-?[0-9]\d*(\.\d+)?)/)
           for(const comments of Array.from(manga_page_dom.window.document.querySelectorAll('[class*=cm_]'))) {
-            //console.log(`${comments.className} (${manga_page.config.url})`)
             const page_id = parseInt(comments.className.match(parser_page_id)[1])
             const current: types.multiple.page_t = {
               url: `${manga_page.url}/#page=${page_id}`,
@@ -94,15 +82,23 @@ export class grouple {
   
             if(current.comments.length) {
               current.comments = current.comments.reverse ()
-              data.pages.push(current)
+              pages.push(current)
             }
           }
   
-          if(data.pages.length) {
-            data.pages = data.pages.sort ((a, b) => {
-              return a.page_id - b.page_id;
+          if(0 != pages.length) {            
+            this.m_emiter.emit ('update', {
+              channel: this._channel,
+              color: this._color,
+              manga: {
+                name: `${manga_item.textContent.trim().replace(/\r?\n|\r/g,'').replace(/ {2,}/g, ' (')})`,
+                url: main_manga_page.url,
+                pages: pages.sort ((a, b) => {
+                  return a.page_id - b.page_id;
+                })
+              },
+              icon: this._favicon
             })
-            items.mangas.push (data)
           }    
         }
       }))
@@ -112,8 +108,6 @@ export class grouple {
     } catch (error) {
       this.m_emiter.emit ('error', error.stack)
     }
-
-    return items;
   }
 
   public subscribe_error (callback: Function) {

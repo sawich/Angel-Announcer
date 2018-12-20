@@ -22,7 +22,7 @@ export namespace types {
 //
 
   export namespace events {
-    export type update = {
+    export type update_t = {
       url: string
       name: string
       color: number
@@ -44,16 +44,18 @@ export namespace types {
       comments: Array <comment_t>
     }
 
+    export type pages_t = page_t[]
+
     export type manga_t = {
       name: string
       url: string
-      pages: Array <page_t>
+      pages: pages_t
     }
 
-    export type service = {
+    export type service_t = {
       channel: TextChannel
       color: number
-      mangas: manga_t[]
+      manga: manga_t
       icon: string
     }
   }
@@ -72,16 +74,18 @@ export namespace types {
       author_link: string
     }
 
+    export type comments_t = comment_t[]
+
     export type manga_t = {
       name: string
       url: string,
-      comments: Array <comment_t>
+      comments: comments_t
     }
 
     export type service_t = {
       channel: TextChannel
       color: number
-      mangas: manga_t[]
+      manga: manga_t
       icon: string
     }
   }

@@ -18,7 +18,7 @@ export class mangachan {
         return `http://mangachan.me${item.getAttribute("href")}`
       });
       
-      const service: types.events.update = {
+      const service: types.events.update_t = {
         color: this._color,
         icon_url: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png',
         name: 'mangachan.me',
@@ -39,12 +39,6 @@ export class mangachan {
 
   public async update() {
     let comment_ids = []
-    const service: types.single.service_t = {
-      channel: this._channel,
-      color: this._color,
-      mangas: [],
-      icon: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png'
-    }
 
     try {      
       const db_model = await this._db_comments.findOne({
@@ -60,11 +54,7 @@ export class mangachan {
         let manga_page = await fetch(`http://mangachan.me/manga/page,1,1,${last_part_url}`)
         let manga_page_dom = new JSDOM(await manga_page.text ())
 
-        const manga: types.single.manga_t = {
-          name: manga_page_dom.window.document.querySelector ('.title_top_a').textContent,
-          url: manga_link,
-          comments: []
-        }
+        const comments: types.single.comments_t = []
 
         for(let page = 2, done = 0; done != 1; ++page) {
           const raw_comments = Array.from(manga_page_dom.window.document.querySelectorAll('[id^=comment-id-]'))
@@ -92,7 +82,7 @@ export class mangachan {
             const [comment_author, , comment_link] = Array.from(comment.querySelectorAll('.comment_left a'))
             const message_date = comment.querySelector('.comment_left').children[3].textContent.replace(/\((.*?)\)/s, '$1')
 
-            manga.comments.push({
+            comments.push({
               author: comment_author.textContent,
               author_link: comment_author.getAttribute('href'),
               message: message,
@@ -105,7 +95,19 @@ export class mangachan {
           manga_page = await fetch(`http://mangachan.me/manga/page,1,${page},${last_part_url}`)
           manga_page_dom = new JSDOM(await manga_page.text ())
         }
-        service.mangas.push (manga)
+
+        if (0 != comments.length) {
+          this.m_emiter.emit ('update', {
+            channel: this._channel,
+            color: this._color,
+            manga: {
+              name: manga_page_dom.window.document.querySelector ('.title_top_a').textContent,
+              url: manga_link,
+              comments
+            },
+            icon: 'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png'
+          })
+        }
       }))
 
       db_model.value = Math.max (db_model.value, ...comment_ids)
@@ -113,8 +115,6 @@ export class mangachan {
     } catch (error) {
       this.m_emiter.emit ('error', error)
     }
-
-    return service
   }
 
   public subscribe_error (callback: Function) {
@@ -123,6 +123,10 @@ export class mangachan {
 
   public subscribe_translator_update (callback: Function) {
     this.m_emiter.addListener ('translator_update', callback.bind (this))
+  }
+
+  public subscribe_update (callback: Function) {
+    this.m_emiter.addListener ('update', callback.bind (this))
   }
 
   constructor(
