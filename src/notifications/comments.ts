@@ -166,6 +166,7 @@ export class comments {
       this._mangachan = new observers_comments.mangachan(0x3baaef, mangachan_channel, yoba, database.comments)
       this._mangachan.subscribe_error (this._on_error.bind (this))
       this._mangachan.subscribe_translator_update (this._on_translator_update.bind (this))
+      this._mangachan.subscribe_update (this._on_update_single.bind (this))
       await this._mangachan.update_translater_page ()
 
 //
@@ -187,6 +188,7 @@ export class comments {
       )
       this._mintmanga.subscribe_error (this._on_error.bind (this))
       this._mintmanga.subscribe_translator_update (this._on_translator_update.bind (this))
+      this._mintmanga.subscribe_update (this._on_update_multiple.bind (this))
       await this._mintmanga.update_translater_page ()
 
 //
@@ -207,6 +209,7 @@ export class comments {
       )
       this._readmanga.subscribe_error (this._on_error.bind (this))
       this._readmanga.subscribe_translator_update (this._on_translator_update.bind (this))
+      this._readmanga.subscribe_update (this._on_update_multiple.bind (this))
       await this._readmanga.update_translater_page ()
 
 			this.mangachan ()

@@ -118,6 +118,10 @@ export class grouple {
   public subscribe_translator_update (callback: Function) {
     this.m_emiter.addListener ('translator_update', callback.bind (this))
   }
+
+  public subscribe_update (callback: Function) {
+    this.m_emiter.addListener ('update', callback.bind (this))
+  }
   
   constructor(
     color: number,
