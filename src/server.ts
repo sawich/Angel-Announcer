@@ -149,7 +149,7 @@ class CApp {
           'http://mangachan.me/translation/70489/',
           'mangachan.me',
           'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png',
-          0x3baaef, channels.test, channels, database.comments
+          0x3baaef, guilds.main.channels.get ('476393313449017364') as TextChannel, channels, database.comments
         ),
         new mangachan (yoba))
 
@@ -160,7 +160,7 @@ class CApp {
           'http://mintmanga.com/list/person/angeldev',
           'mintmanga.com',
           'https://cdn.discordapp.com/attachments/407454794056204290/524706486572810270/cbdn8-xrzud.png',
-          0x9ff12b, channels.test, channels, database.comments
+          0x9ff12b, guilds.main.channels.get ('524649912768659466') as TextChannel, channels, database.comments
         ),
         new grouple ())
 
@@ -171,7 +171,7 @@ class CApp {
           'http://readmanga.me/list/person/angeldev',
           'readmanga.me',
           'https://images-ext-1.discordapp.net/external/yarTrkbfii08uiLg4t3976lJ8UO7vTJ911m0HlGFZbs/https/images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png?width=16&height=16',
-          0xedd644, channels.test, channels, database.comments
+          0xedd644, guilds.main.channels.get ('476390702196981761') as TextChannel, channels, database.comments
         ),
         new grouple ())
 
