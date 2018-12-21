@@ -32,7 +32,7 @@ export default Object.freeze({
     time: {
       translator: 3600000,
       translator_error: 10000,
-      comments: 60 * 3600
+      comments: 60 * 1000
     }
   }
 })

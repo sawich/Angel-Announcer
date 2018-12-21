@@ -8,8 +8,7 @@ export interface ICommand {
 	command_handler(message: Message, args: string[]) : Promise <void>
 }
 
-export class CCommands {
-	
+export class CCommands {	
 	private _cmds: commands_t
 
 	constructor(_cmds: commands_t) {
@@ -32,7 +31,7 @@ export class CCommands {
 		const cmd: Function = this._cmds.get (command.toLowerCase())
 		if (!cmd) { return }
 
-		cmd (message, args)
+		return cmd (message, args)
 	}
 
 }

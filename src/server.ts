@@ -51,6 +51,8 @@ import { unlinkSync } from 'fs';
 import * as notifications from './notifications'
 
 import * as scans from './observers/scans'
+import { mangachan, grouple } from './parsers'
+import * as comments from './comments'
 
 class CApp {
 	constructor() {
@@ -86,6 +88,9 @@ class CApp {
 				}})
 			})
 
+			const guilds   = new CGuilds(discord_client)
+      const channels = new CChannels(guilds)
+
 			const grabbers = new Map <string, IGrabber> ([[
 				'lily', new CGrabberDajiaochongmanhua(1378)
 			], [
@@ -93,10 +98,8 @@ class CApp {
 			]])
 
 			//
-			const guilds   = new CGuilds(discord_client)
-			const channels = new CChannels(guilds)
 
-			process.on('unhandledRejection', (reason: Error | any, p: Promise <any>) => {        
+			process.on('unhandledRejection', (reason: Error | any, p: Promise <any>) => {
         channels.log.send ({ embed: {
           color: 0xFF0000,
           title: reason.name,
@@ -111,7 +114,7 @@ class CApp {
 						url: config.site
 					},
           timestamp: new Date
-        }}).catch(console.error)      
+        }}).catch(console.error)
 
 				console.error((new Date).toUTCString() + ' unhandledRejection:', reason.message)
 				console.error(reason.stack)
@@ -134,8 +137,49 @@ class CApp {
 				console.error(ex.stack)
 			})
 
-			await database_load
+      await database_load
 
+
+      const yoba = discord_client.emojis.get('430424310050717696')
+
+      const mc = new comments.service (
+        new comments.base.single (
+          discord_client,
+          guilds,
+          'http://mangachan.me/translation/70489/',
+          'mangachan.me',
+          'https://media.discordapp.net/attachments/473850605031522315/475441620406501387/favicon.png',
+          0x3baaef, channels.test, channels, database.comments
+        ),
+        new mangachan (yoba))
+
+      const mm = new comments.service (
+        new comments.base.multiple (
+          discord_client,
+          guilds,
+          'http://mintmanga.com/list/person/angeldev',
+          'mintmanga.com',
+          'https://cdn.discordapp.com/attachments/407454794056204290/524706486572810270/cbdn8-xrzud.png',
+          0x9ff12b, channels.test, channels, database.comments
+        ),
+        new grouple ())
+
+      const rm = new comments.service (
+        new comments.base.multiple (
+          discord_client,
+          guilds,
+          'http://readmanga.me/list/person/angeldev',
+          'readmanga.me',
+          'https://images-ext-1.discordapp.net/external/yarTrkbfii08uiLg4t3976lJ8UO7vTJ911m0HlGFZbs/https/images-ext-2.discordapp.net/external/hJe0w-3ID-KwQvUA9lvoVW6DJznQkQ6Ht1_9uYN8Tvw/http/res.readmanga.me/static/apple-touch-icon-a401a05b79c2dad93553ebc3523ad5fe.png?width=16&height=16',
+          0xedd644, channels.test, channels, database.comments
+        ),
+        new grouple ())
+
+      const comments_services = new Map ([
+        [ 'mc', mc ],
+        [ 'mm', mm ],
+        [ 'rm', rm ]
+      ])
 			const maiden_management = new CMaidenManagement(database.maidens, discord_client, guilds, channels)
 
 			maiden_management.once('maintenance_add', async (angelmaidens: GuildMember[]) => {
@@ -200,7 +244,32 @@ class CApp {
 
 			//
 			const commands = new CCommands(new Map <string, Function> ([
+        [ 'notifier', async (message: Message, [ cmd, srv ]: string) => {
+          switch (cmd) {
+            case 'links': {
+              const service = comments_services.get (srv)
+              if (undefined == service) { return }
 
+              return message.reply ({ embed: {
+                color: service.color,
+                title: 'Список манги',
+                description: (await service.links ()).map ((link, index) => `\`\`${('0' + index).slice (-2)}\`\` ***[${link.name}](${link.link})***`).join ('\n'),
+                author: {
+                  name: guilds.main.member(discord_client.user.id).displayName,
+                  icon_url: discord_client.user.avatarURL,
+                  url: service.translator_url
+                },
+                thumbnail: {
+                  url: service.icon_url
+                },
+                footer: {
+                  text: service.service
+                },
+                timestamp: new Date
+              }})
+            }
+          }
+        }],
 				[ 'grab', async (message: Message, args: string[]) => {
 					if(args.length < 2) { return }
 
@@ -385,10 +454,10 @@ class CApp {
 				process.exit(1)
 			})
 
-			new notifications.comments (discord_client, channels, database, guilds)
+			new notifications.comments (Array.from (comments_services.values ()), discord_client, channels, guilds)
 
       console.log(`Logged in as ${discord_client.user.tag}!`)
-      
+
       channels.log.send ({ embed: {
         color: 0x00bfff,
         description: 'Сервис перезапущен',
@@ -398,7 +467,7 @@ class CApp {
           url: config.site
         },
         timestamp: new Date
-      }}).catch(console.error)   
+      }}).catch(console.error)
 		})
 	}
 }
