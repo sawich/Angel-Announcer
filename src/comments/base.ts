@@ -23,24 +23,24 @@ export namespace base {
 
       this._manga_urls = await parser.translator (translator_page_dom)
 
-      return this._channels.log.send ({ embed: {
-        color: this._color,
-        author: {
-          name: this._guilds.main.member(this._discord_client.user.id).displayName,
-          icon_url: this._discord_client.user.avatarURL,
-          url: config.site
-        },
-        url: this._translator_url,
-        title: this._service,
-        thumbnail: {
-          url: this._icon_url
-        },
-        footer: {
-          text: `${this._manga_urls.length} ${this.decl_of_num (this._manga_urls.length, [ 'линк', 'линка', 'линков' ])}`
-        },
-        description: 'Список манги обновлён',
-        timestamp: new Date
-      }})
+      // return this._channels.log.send ({ embed: {
+      //   color: this._color,
+      //   author: {
+      //     name: this._guilds.main.member(this._discord_client.user.id).displayName,
+      //     icon_url: this._discord_client.user.avatarURL,
+      //     url: config.site
+      //   },
+      //   url: this._translator_url,
+      //   title: this._service,
+      //   thumbnail: {
+      //     url: this._icon_url
+      //   },
+      //   footer: {
+      //     text: `${this._manga_urls.length} ${this.decl_of_num (this._manga_urls.length, [ 'линк', 'линка', 'линков' ])}`
+      //   },
+      //   description: 'Список манги обновлён',
+      //   timestamp: new Date
+      // }})
     }
 
     protected async onUpdateCommentsSelector (

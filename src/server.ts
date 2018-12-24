@@ -138,8 +138,7 @@ class CApp {
 			})
 
       await database_load
-
-
+      
       const yoba = discord_client.emojis.get('430424310050717696')
 
       const mc = new comments.service (
