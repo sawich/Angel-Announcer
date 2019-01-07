@@ -26,7 +26,8 @@ export default Object.freeze({
 		}
 	},
 	vk: {
-		tag: '#releases@angeldevmanga'
+    tag: '#releases@angeldevmanga',
+    group_id_test: 149052453 // Полигон для испытаний
   },
   comments: {
     time: {

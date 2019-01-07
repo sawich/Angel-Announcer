@@ -53,6 +53,7 @@ import * as notifications from './notifications'
 import * as scans from './observers/scans'
 import { mangachan, grouple } from './parsers'
 import * as comments from './comments'
+import { vk } from './vk'
 
 class CApp {
 	constructor() {
@@ -139,6 +140,11 @@ class CApp {
 
       await database_load
       
+      // VK LOOOOONG API based observer
+      const vko = new vk (discord_client, channels, guilds)
+      vko.launch ()
+
+      //
       const yoba = discord_client.emojis.get('430424310050717696')
 
       const mc = new comments.service (
@@ -459,7 +465,7 @@ class CApp {
 
       channels.log.send ({ embed: {
         color: 0x00bfff,
-        description: 'Сервис перезапущен',
+        description: 'Сервер перезапущен',
         author: {
           name: guilds.main.member(discord_client.user.id).displayName,
           icon_url: discord_client.user.avatarURL,

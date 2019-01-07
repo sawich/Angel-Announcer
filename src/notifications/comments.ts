@@ -3,7 +3,7 @@ import { Client } from 'discord.js'
 import { CChannels } from '../CChannels'
 import { CGuilds } from '../CGuilds'
 import config from '../config/config'
-import { error } from '../utils';
+import { error } from '../utils'
 
 export class comments extends error {
 	private async _interval (callback: () => Promise <void>, intr: number) {

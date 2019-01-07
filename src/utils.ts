@@ -25,7 +25,7 @@ export interface IOnError {
 }
 
 export class error {
-  protected async onError (error: Error) {
+  protected async onError (error: Error, fields = []) {
     return this._channels.log.send ({ embed: {
       color: 0xFF0000,
       title: error.name,
@@ -38,7 +38,7 @@ export class error {
       fields: [{
         name: 'stack trace',
         value: `\`\`\`ps\n${error.stack}\`\`\``
-      }],
+      }, ...fields ],
       timestamp: new Date
     }}).catch (this.onError.bind (this))
   }
