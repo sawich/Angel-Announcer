@@ -18,7 +18,7 @@
     "@types/node": "^10.12.12",
     "@types/node-fetch": "^2.1.4",
     "@types/uuid": "^3.4.4",
-    "archiver": "^2.1.1",
+    "archiver": "^5.0.0",
     "axios": "^0.18.0",
     "bitly": "^6.0.8",
     "cheerio": "^1.0.0-rc.2",
