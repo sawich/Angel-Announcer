@@ -20,7 +20,7 @@
     "@types/uuid": "^3.4.4",
     "archiver": "^2.1.1",
     "axios": "^0.18.0",
-    "bitly": "^6.0.8",
+    "bitly": "^7.1.2",
     "cheerio": "^1.0.0-rc.2",
     "discord.js": "^11.4.2",
     "express": "^4.16.4",
